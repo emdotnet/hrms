@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@fullcalendar/resource-common": "^5.11.0",
+    "@fullcalendar/resource-timeline": "^5.11.0"
+  }
+}

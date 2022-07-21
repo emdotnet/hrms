@@ -57,6 +57,8 @@ def update_employee_work_history(employee, details, date=None, cancel=False):
 			new_data = getdate(new_data)
 		elif fieldtype == "Datetime" and new_data:
 			new_data = get_datetime(new_data)
+		elif fieldtype in ["Currency", "Float"] and new_data:
+			new_data = flt(new_data)
 		setattr(employee, item.fieldname, new_data)
 		if item.fieldname in ["department", "designation", "branch"]:
 			internal_work_history[item.fieldname] = item.new
@@ -270,7 +272,7 @@ def generate_leave_encashment():
 
 		create_leave_encashment(leave_allocation=leave_allocation)
 
-
+@erpnext.allow_regional
 def allocate_earned_leaves():
 	"""Allocate earned leaves to Employees"""
 	e_leave_types = get_earned_leaves()
@@ -509,6 +511,9 @@ def get_holidays_for_employee(
 	"""
 	holiday_list = get_holiday_list_for_employee(employee, raise_exception=raise_exception)
 
+	if holiday_list or frappe.db.get_value("Holiday List", holiday_list, "from_date") > end_date:
+		holiday_list = get_previous_holiday_list(holiday_list, start_date, end_date)
+
 	if not holiday_list:
 		return []
 
@@ -521,6 +526,18 @@ def get_holidays_for_employee(
 
 	return holidays
 
+def get_previous_holiday_list(holiday_list, start, end):
+	while True:
+		name, from_date, to_date, replaced_list = frappe.db.get_value(
+			"Holiday List", holiday_list, ["name", "from_date", "to_date", "replaces_holiday_list"]
+		)
+
+		if getdate(from_date) <= getdate(start) and getdate(to_date) >= getdate(end):
+			return name
+		elif not replaced_list:
+			return
+
+		holiday_list = replaced_list
 
 @erpnext.allow_regional
 def calculate_annual_eligible_hra_exemption(doc):

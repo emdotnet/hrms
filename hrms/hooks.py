@@ -11,7 +11,7 @@ required_apps = ["erpnext"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/hrms/css/hrms.css"
+app_include_css = "hrms.bundle.css"
 # app_include_js = "/assets/hrms/js/hrms.js"
 
 # include js, css files in header of web template
@@ -38,6 +38,15 @@ doctype_js = {
 	"Journal Entry": "public/js/journal_entry.js",
 	"Delivery Trip": "public/js/deliver_trip.js",
 	"Bank Transaction": "public/js/bank_transaction.js",
+}
+
+doctype_regional_js = {
+	"Holiday List": {
+		"France": "public/js/regional/france/holiday_list.js"
+	},
+	"Leave Type": {
+		"France": "public/js/regional/france/leave_type.js"
+	}
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -215,6 +224,9 @@ regional_overrides = {
 		"hrms.hr.utils.calculate_annual_eligible_hra_exemption": "hrms.regional.india.utils.calculate_annual_eligible_hra_exemption",
 		"hrms.hr.utils.calculate_hra_exemption_for_period": "hrms.regional.india.utils.calculate_hra_exemption_for_period",
 	},
+	"France": {
+		"hrms.hr.doctype.leave_application.leave_application.get_regional_number_of_leave_days": "hrms.regional.france.hr.utils.get_regional_number_of_leave_days",
+	}
 }
 
 # ERPNext doctypes for Global Search

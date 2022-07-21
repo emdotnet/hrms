@@ -19,12 +19,12 @@ from frappe.utils import (
 	nowdate,
 )
 
+import erpnext
 from erpnext.buying.doctype.supplier_scorecard.supplier_scorecard import daterange
-from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
-
-from hrms.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
-from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import create_leave_ledger_entry
-from hrms.hr.utils import (
+from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
+from erpnext.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
+from erpnext.hr.doctype.leave_ledger_entry.leave_ledger_entry import create_leave_ledger_entry
+from erpnext.hr.utils import (
 	get_holiday_dates_for_employee,
 	get_leave_period,
 	set_employee_name,
@@ -125,7 +125,7 @@ class LeaveApplication(Document):
 				number_of_days = date_diff(getdate(self.from_date), date_of_joining)
 				if number_of_days >= 0:
 					holidays = 0
-					if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
+					if not leave_type.include_holiday:
 						holidays = get_holidays(self.employee, date_of_joining, self.from_date)
 					number_of_days = number_of_days - leave_days - holidays
 					if number_of_days < leave_type.applicable_after:
@@ -215,10 +215,9 @@ class LeaveApplication(Document):
 
 	def validate_back_dated_application(self):
 		future_allocation = frappe.db.sql(
-			"""select name, from_date from `tabLeave Allocation`
-			where employee=%s and leave_type=%s and docstatus=1 and from_date > %s
+			f"""select name, from_date from `tabLeave Allocation`
+			where employee={frappe.db.escape(self.employee)} and leave_type={frappe.db.escape(self.leave_type)} and docstatus=1 and from_date > {frappe.db.escape(self.to_date)}
 			and carry_forward=1""",
-			(self.employee, self.leave_type, self.to_date),
 			as_dict=1,
 		)
 
@@ -734,7 +733,19 @@ def get_number_of_leave_days(
 ) -> float:
 	"""Returns number of leave days between 2 dates after considering half day and holidays
 	(Based on the include_holiday setting in Leave Type)"""
-	number_of_days = 0
+	number_of_days = get_regional_number_of_leave_days(
+		employee,
+		leave_type,
+		from_date,
+		to_date,
+		half_day,
+		half_day_date,
+		holiday_list,
+	)
+
+	if number_of_days:
+		return number_of_days
+
 	if cint(half_day) == 1:
 		if getdate(from_date) == getdate(to_date):
 			number_of_days = 0.5
@@ -749,7 +760,21 @@ def get_number_of_leave_days(
 		number_of_days = flt(number_of_days) - flt(
 			get_holidays(employee, from_date, to_date, holiday_list=holiday_list)
 		)
+
 	return number_of_days
+
+
+@erpnext.allow_regional
+def get_regional_number_of_leave_days(
+	employee: str,
+	leave_type: str,
+	from_date: str,
+	to_date: str,
+	half_day: Optional[int] = None,
+	half_day_date: Optional[str] = None,
+	holiday_list: Optional[str] = None,
+) -> float:
+	return 0
 
 
 @frappe.whitelist()
@@ -758,6 +783,7 @@ def get_leave_details(employee, date):
 	leave_allocation = {}
 	for d in allocation_records:
 		allocation = allocation_records.get(d, frappe._dict())
+
 		remaining_leaves = get_leave_balance_on(
 			employee, d, date, to_date=allocation.to_date, consider_all_leaves_in_the_allocation_period=True
 		)
@@ -1103,7 +1129,7 @@ def add_leaves(events, start, end, filter_conditions=None):
 	WHERE
 		from_date <= %(end)s AND to_date >= %(start)s <= to_date
 		AND docstatus < 2
-		AND status in ('Approved', 'Open')
+		AND status != 'Rejected'
 	"""
 
 	if conditions:
@@ -1189,30 +1215,29 @@ def get_mandatory_approval(doctype):
 def get_approved_leaves_for_period(employee, leave_type, from_date, to_date):
 	LeaveApplication = frappe.qb.DocType("Leave Application")
 	query = (
-		frappe.qb.from_(LeaveApplication)
-		.select(
-			LeaveApplication.employee,
-			LeaveApplication.leave_type,
-			LeaveApplication.from_date,
-			LeaveApplication.to_date,
-			LeaveApplication.total_leave_days,
-		)
-		.where(
-			(LeaveApplication.employee == employee)
-			& (LeaveApplication.docstatus == 1)
-			& (LeaveApplication.status == "Approved")
-			& (
-				(LeaveApplication.from_date.between(from_date, to_date))
-				| (LeaveApplication.to_date.between(from_date, to_date))
-				| ((LeaveApplication.from_date < from_date) & (LeaveApplication.to_date > to_date))
+			frappe.qb.from_(LeaveApplication)
+			.select(
+					LeaveApplication.employee,
+					LeaveApplication.leave_type,
+					LeaveApplication.from_date,
+					LeaveApplication.to_date,
+					LeaveApplication.total_leave_days,
 			)
-		)
+			.where(
+					(LeaveApplication.employee == employee)
+					& (LeaveApplication.docstatus == 1)
+					& (LeaveApplication.status == "Approved")
+					& (
+							(LeaveApplication.from_date.between(from_date, to_date))
+							| (LeaveApplication.to_date.between(from_date, to_date))
+							| ((LeaveApplication.from_date < from_date) & (LeaveApplication.to_date > to_date))
+					)
+			)
 	)
-
 	if leave_type:
 		query = query.where(LeaveApplication.leave_type == leave_type)
 
-	leave_applications = query.run(as_dict=True)
+	leave_applications = frappe.db.sql(query, as_dict=1)
 
 	leave_days = 0
 	for leave_app in leave_applications:
