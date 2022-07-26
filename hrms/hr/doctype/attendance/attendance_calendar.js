@@ -25,5 +25,5 @@ frappe.views.calendar["Attendance"] = {
 		"On Leave": "red",
 		"Half Day": "orange"
 	},
-	get_events_method: "erpnext.hr.doctype.attendance.attendance.get_events"
+	get_events_method: "hrms.hr.doctype.attendance.attendance.get_events"
 };
