@@ -43,9 +43,6 @@ doctype_js = {
 doctype_regional_js = {
 	"Holiday List": {
 		"France": "public/js/regional/france/holiday_list.js"
-	},
-	"Leave Type": {
-		"France": "public/js/regional/france/leave_type.js"
 	}
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}

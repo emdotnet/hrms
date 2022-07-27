@@ -75,12 +75,11 @@ class EarnedLeaveCalculator:
 			)
 
 			if (
-				self.leave_type.earned_leave_frequency == "Custom Formula"
-				and self.formula_map.get(self.leave_type.earned_leave_frequency_formula)
+				self.leave_type.earned_leave_frequency in ("Congés payés sur jours ouvrables", "Congés payés sur jours ouvrés")
 			):
-				self.formula_map.get(self.leave_type.earned_leave_frequency_formula)()
+				self.formula_map.get(self.leave_type.earned_leave_frequency)()
 
-			elif self.leave_type.earned_leave_frequency != "Custom Formula":
+			elif self.leave_type.earned_leave_frequency in ("Monthly", "Quarterly", "Half-Yearly", "Yearly"):
 				self.earned_leaves = (
 					flt(self.annual_allocation) / self.divide_by_frequency[self.leave_type.earned_leave_frequency]
 				)
@@ -211,19 +210,17 @@ def get_regional_number_of_leave_days(
 			"include_holiday",
 			"is_earned_leave",
 			"earned_leave_frequency",
-			"earned_leave_frequency_formula",
 		],
 		as_dict=True,
 	)
 
-	if leave_type.is_earned_leave and leave_type.earned_leave_frequency == "Custom Formula":
-		if leave_type.earned_leave_frequency_formula == "Congés payés sur jours ouvrables":
-			# TODO: Appliquer la règle des 5 samedis maximum
-			non_weekly_holidays = [
-				d.holiday_date
-				for d in get_holidays_for_employee(employee, from_date, to_date, only_non_weekly=True)
-			]
-			holidays = [d for d in holidays if d.day != 6 and d not in non_weekly_holidays]
+	if leave_type.is_earned_leave and leave_type.earned_leave_frequency == "Congés payés sur jours ouvrables":
+		# TODO: Appliquer la règle des 5 samedis maximum
+		non_weekly_holidays = [
+			d.holiday_date
+			for d in get_holidays_for_employee(employee, from_date, to_date, only_non_weekly=True)
+		]
+		holidays = [d for d in holidays if d.day != 6 and d not in non_weekly_holidays]
 
 	if not leave_type.include_holiday:
 		number_of_days = flt(number_of_days) - flt(holidays)

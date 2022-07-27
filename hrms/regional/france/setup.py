@@ -2,11 +2,23 @@
 # License: GNU General Public License v3. See license.txt
 
 import frappe
-from frappe import _
-
+from frappe import _, make_property_setter
 
 def setup(company=None, patch=True):
+	make_property_setters()
 	setup_default_leaves()
+
+
+def make_property_setters():
+	make_property_setter({
+			"doctype": "Leave Type",
+			"fieldname": "earned_leave_frequency",
+			"property": "options",
+			"value": "Monthly\nQuarterly\nHalf-Yearly\nYearly\nCongés payés sur jours ouvrables\nCongés payés sur jours ouvrés",
+			"property_type": "Select",
+		},
+		is_system_generated=True,
+	)
 
 def setup_default_leaves():
 	leave_types = [
@@ -31,8 +43,7 @@ def setup_default_leaves():
 			"max_leaves_allowed": 30,
 			"allow_negative": 1,
 			"is_earned_leave": 1,
-			"earned_leave_frequency": "Custom Formula",
-			"earned_leave_frequency_formula": "Congés payés sur jours ouvrables",
+			"earned_leave_frequency": "Congés payés sur jours ouvrables",
 		},
 		{
 			"doctype": "Leave Type",

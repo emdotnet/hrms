@@ -39,7 +39,7 @@ frappe.ui.form.on('Holiday List', {
 				],
 				primary_action: function() {
 					const data = dialog.get_values();
-					frappe.xcall('erpnext.regional.france.hr.bank_holidays.get_french_bank_holidays', {year: data.year, zone: data.zone})
+					frappe.xcall('hrms.regional.france.hr.bank_holidays.get_french_bank_holidays', {year: data.year, zone: data.zone})
 					.then(r => {
 						Object.keys(r).forEach(function(element) {
 							const holiday = frm.add_child("holidays");
