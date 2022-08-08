@@ -15,6 +15,7 @@ def after_install():
 	update_hr_defaults()
 	add_non_standard_user_types()
 	set_single_defaults()
+	frappe.db.commit()
 	run_post_install_patches()
 	click.secho("Thank you for installing Dokos HR!", fg="green")
 
@@ -639,8 +640,13 @@ def run_post_install_patches():
 
 	POST_INSTALL_PATCHES = get_post_install_patches()
 
-	for patch in POST_INSTALL_PATCHES:
-		# patch has not run on the site before
-		if not frappe.db.exists("Patch Log", {"patch": patch}):
-			patch_name = patch.split(".")[-1]
-			frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
+	frappe.flags.in_patch = True
+
+	try:
+		for patch in POST_INSTALL_PATCHES:
+			# patch has not run on the site before
+			if not frappe.db.exists("Patch Log", {"patch": ("like", f"%{patch}%")}):
+				patch_name = patch.split(".")[-1]
+				frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
+	finally:
+		frappe.flags.in_patch = False
