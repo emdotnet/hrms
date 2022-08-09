@@ -163,6 +163,9 @@ doc_events = {
 		"on_update": "hrms.overrides.employee_master.update_approver_role",
 		"on_trash": "hrms.overrides.employee_master.update_employee_transfer",
 	},
+	"Project": {
+		"validate": "hrms.controllers.employee_onboarding_controller.update_employee_boarding_status"
+	}
 }
 
 # Scheduled Tasks

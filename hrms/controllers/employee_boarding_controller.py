@@ -173,8 +173,8 @@ def get_onboarding_details(parent, parenttype):
 		order_by="idx",
 	)
 
-
-def update_employee_boarding_status(project):
+# TODO: trigger this function on task update also
+def update_employee_boarding_status(project, method=None):
 	employee_onboarding = frappe.db.exists("Employee Onboarding", {"project": project.name})
 	employee_separation = frappe.db.exists("Employee Separation", {"project": project.name})
 
