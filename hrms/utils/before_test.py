@@ -30,5 +30,12 @@ def before_tests():
 			}
 		)
 
+	set_defaults_for_tests()
 	enable_all_roles_and_domains()
 	frappe.db.commit()  # nosemgrep
+
+def set_defaults_for_tests():
+	system_settings = frappe.get_single("System Settings")
+	system_settings.float_precision = 2
+	system_settings.currency_precision = 2
+	system_settings.save()
