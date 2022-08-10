@@ -167,7 +167,7 @@ doc_events = {
 		"on_trash": "hrms.overrides.employee_master.update_employee_transfer",
 	},
 	"Project": {
-		"validate": "hrms.controllers.employee_onboarding_controller.update_employee_boarding_status"
+		"validate": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
 	}
 }
 
