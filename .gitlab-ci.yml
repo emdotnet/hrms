@@ -40,7 +40,7 @@ unittests:
     - adduser --disabled-password --gecos "" dokotest
     - usermod -aG sudo dokotest
     - echo 'dokotest ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers
-    - su -c "dpkg -i wkhtmltox_0.12.6-1.buster_i386.deb && rm wkhtmltox_0.12.6-1.buster_i386.deb" dokotest
+    - su -c "sudo dpkg -i wkhtmltox_0.12.6-1.buster_i386.deb && rm wkhtmltox_0.12.6-1.buster_i386.deb" dokotest
     - su -c "pip install dokos-cli" dokotest
     - su -c "cd /home/dokotest && bench init dokos-bench --no-backups --skip-redis-config-generation --skip-assets --frappe-branch $CI_COMMIT_REF_NAME" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench get-app https://gitlab.com/dokos/payments.git --branch $CI_COMMIT_REF_NAME" dokotest
