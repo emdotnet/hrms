@@ -31,7 +31,6 @@ unittests:
     - export LANG=C.UTF-8
     - export LC_ALL=C.UTF-8
     - export LANGUAGE=en_US.UTF-8
-    - dpkg -i wkhtmltox_0.12.6-1.buster_i386.deb && rm wkhtmltox_0.12.6-1.buster_i386.deb
     - rm -rf /var/lib/apt/lists/*
     - rm -rf /etc/apt/sources.list.d/*
     - curl -sL https://deb.nodesource.com/setup_16.x | bash
@@ -41,6 +40,7 @@ unittests:
     - adduser --disabled-password --gecos "" dokotest
     - usermod -aG sudo dokotest
     - echo 'dokotest ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers
+    - su -c "dpkg -i wkhtmltox_0.12.6-1.buster_i386.deb && rm wkhtmltox_0.12.6-1.buster_i386.deb" dokotest
     - su -c "pip install dokos-cli" dokotest
     - su -c "cd /home/dokotest && bench init dokos-bench --no-backups --skip-redis-config-generation --skip-assets --frappe-branch $CI_COMMIT_REF_NAME" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench get-app https://gitlab.com/dokos/payments.git --branch $CI_COMMIT_REF_NAME" dokotest
