@@ -168,6 +168,10 @@ doc_events = {
 	},
 	"Project": {
 		"validate": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
+	},
+	"Task": {
+		"on_update": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status",
+		"after_delete": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
 	}
 }
 
