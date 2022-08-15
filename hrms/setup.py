@@ -17,7 +17,7 @@ def after_install():
 	set_single_defaults()
 	frappe.db.commit()
 	run_post_install_patches()
-	click.secho("Thank you for installing Dokos HR!", fg="green")
+	click.secho("Thank you for installing Dokos HR Management System!", fg="green")
 
 
 def get_custom_fields():

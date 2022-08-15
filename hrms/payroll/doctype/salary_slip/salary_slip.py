@@ -114,7 +114,7 @@ class SalarySlip(TransactionBase):
 			self.make_loan_repayment_entry()
 			if (
 				frappe.db.get_single_value("Payroll Settings", "email_salary_slip_to_employee")
-			) and not frappe.flags.via_payroll_entry:
+			) and not frappe.flags.via_payroll_entry and not frappe.flags.in_ci: # TODO: Solve HostNotFoundError in CI to execute this action
 				self.email_salary_slip()
 
 		self.update_payment_status_for_gratuity()
