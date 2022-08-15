@@ -47,7 +47,7 @@ unittests:
     - echo 'dokotest ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers
     - su -c "pip install dokos-cli" dokotest
     - su -c "cd /home/dokotest && bench init dokos-bench --no-backups --skip-redis-config-generation --skip-assets --frappe-branch $BASE_BRANCH" dokotest
-    - su -c "cd /home/dokotest/dokos-bench && bench get-app https://gitlab.com/dokos/payments.git --branch $BASE_BRANCH" dokotest
+    - su -c "cd /home/dokotest/dokos-bench && bench get-app https://gitlab.com/dokos/payments.git --branch develop" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench get-app https://gitlab.com/dokos/dokos.git --branch $BASE_BRANCH" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench get-app /builds/dokos/hrms/" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench config set-common-config -c redis_queue redis://redis_queue:6379 -c redis_cache redis://redis_cache:6379 -c redis_socketio redis://redis_socketio:6379" dokotest
@@ -65,11 +65,4 @@ unittests:
     - su -c "cd /home/dokotest/dokos-bench && bench build --app hrms" dokotest
 
   script:
-    - su -c "cd /home/dokotest/dokos-bench && bench --site test_site run-tests --app hrms --junit-xml-output /builds/dokos/hrms/rspec.xml" dokotest
-
-  artifacts:
-    when: always
-    paths:
-      - rspec.xml
-    reports:
-      junit: rspec.xml
+    - su -c "cd /home/dokotest/dokos-bench && bench --site test_site run-parallel-tests --app hrms" dokotest
