@@ -73,10 +73,11 @@ website_route_rules = [
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "hrms.utils.jinja_methods",
-# 	"filters": "hrms.utils.jinja_filters"
-# }
+jinja = {
+	"methods": [
+		"hrms.utils.get_country",
+	],
+}
 
 # Installation
 # ------------
@@ -218,7 +219,7 @@ bank_reconciliation_doctypes = ["Expense Claim"]
 # Testing
 # -------
 
-before_tests = "hrms.utils.before_test.before_tests"
+before_tests = "hrms.utils.before_tests"
 
 # Overriding Methods
 # -----------------------------
