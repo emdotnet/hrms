@@ -527,7 +527,6 @@ def get_holidays_for_employee(
 		"Holiday", fields=["description", "holiday_date"], filters=filters, order_by="holiday_date"
 	)
 
-
 	return holidays
 
 def get_previous_holiday_list(holiday_list, start, end):
