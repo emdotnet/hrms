@@ -163,7 +163,7 @@ def send_interview_reminder():
 		as_dict=True,
 	)
 
-	if not reminder_settings.send_interview_reminder:
+	if not cint(reminder_settings.send_interview_reminder):
 		return
 
 	remind_before = cstr(frappe.db.get_single_value("HR Settings", "remind_before")) or "01:00:00"
