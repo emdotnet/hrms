@@ -50,7 +50,7 @@ def get_dashboard_for_employee(data):
 				"items": ["Training Event", "Training Result", "Training Feedback", "Employee Skill Map"],
 			},
 			{"label": _("Evaluation"), "items": ["Appraisal"]},
-			{"label": _("Contracts"), "items": ["Employee Contract"]}
+			{"label": _("Contracts"), "items": ["Employment Contract"]}
 		],
 	}
 
