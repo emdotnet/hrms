@@ -216,7 +216,7 @@
   {
    "color": "Green",
    "doc_view": "List",
-   "format": "{} ",
+   "format": "{}",
    "label": "Employee Checkin",
    "link_to": "Employee Checkin",
    "type": "DocType"
