@@ -34,8 +34,12 @@ Dokos HRMS offers over 13 different modules from Employee Management to Onboardi
 3. Once Dokos is installed, add the HRMS application to your bench by running
 
     ```sh
-    $ bench get-app hrms
+    $ bench get-app hrms --branch <version branch>
     ```
+
+> Example: If you want to use this application with Dokos v3, you should use branch `v3.x.x`  
+> `$ bench get-app hrms --branch v3.x.x`
+
 4. After that, you can install the hrms app on the required site by running
     ```sh
     $ bench --site sitename install-app hrms
