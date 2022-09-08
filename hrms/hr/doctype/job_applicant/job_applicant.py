@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import append_number_if_name_exists
-from frappe.utils import validate_email_address
+from frappe.utils import flt, validate_email_address
 
 from hrms.hr.doctype.interview.interview import get_interviewers
 
@@ -84,18 +84,26 @@ def get_interview_details(job_applicant):
 	interview_details = frappe.db.get_all(
 		"Interview",
 		filters={"job_applicant": job_applicant, "docstatus": ["!=", 2]},
-		fields=["name", "interview_round", "expected_average_rating", "average_rating", "status"],
+		fields=["name", "interview_round", "scheduled_on", "average_rating", "status"],
 	)
 	interview_detail_map = {}
 	meta = frappe.get_meta("Interview")
-	number_of_stars = meta.get_options("expected_average_rating") or 5
+	number_of_stars = meta.get_options("average_rating") or 5
 
 	for detail in interview_details:
-		detail.expected_average_rating = (
-			detail.expected_average_rating * number_of_stars if detail.expected_average_rating else 0
-		)
 		detail.average_rating = detail.average_rating * number_of_stars if detail.average_rating else 0
 
 		interview_detail_map[detail.name] = detail
 
 	return {"interviews": interview_detail_map, "stars": number_of_stars}
+
+
+@frappe.whitelist()
+def get_applicant_to_hire_percentage():
+	total_applicants = frappe.db.count("Job Applicant")
+	total_hired = frappe.db.count("Job Applicant", filters={"status": "Accepted"})
+
+	return {
+		"value": flt(total_hired) / flt(total_applicants) * 100 if total_applicants else 0,
+		"fieldtype": "Percent",
+	}

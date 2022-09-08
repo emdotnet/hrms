@@ -316,12 +316,12 @@ class ExpenseClaim(AccountsController):
 
 		if self.total_advance_amount:
 			precision = self.precision("total_advance_amount")
-			if flt(self.total_advance_amount, precision) > flt(self.total_claimed_amount, precision):
-				frappe.throw(_("Total advance amount cannot be greater than total claimed amount"))
+			amount_with_taxes = flt(
+				(flt(self.total_sanctioned_amount, precision) + flt(self.total_taxes_and_charges, precision)),
+				precision,
+			)
 
-			if self.total_sanctioned_amount and flt(self.total_advance_amount, precision) > flt(
-				self.total_sanctioned_amount, precision
-			):
+			if flt(self.total_advance_amount, precision) > amount_with_taxes:
 				frappe.throw(_("Total advance amount cannot be greater than total sanctioned amount"))
 
 	def validate_sanctioned_amount(self):
@@ -471,7 +471,9 @@ def get_advances(employee, advance_id=None):
 def get_expense_claim(
 	employee_name, company, employee_advance_name, posting_date, paid_amount, claimed_amount
 ):
-	default_payable_account = frappe.get_cached_value("Company", company, "default_payable_account")
+	default_payable_account = frappe.get_cached_value(
+		"Company", company, "default_expense_claim_payable_account"
+	)
 	default_cost_center = frappe.get_cached_value("Company", company, "cost_center")
 
 	expense_claim = frappe.new_doc("Expense Claim")

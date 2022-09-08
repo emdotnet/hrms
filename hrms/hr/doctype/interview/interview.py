@@ -7,7 +7,7 @@ import datetime
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cstr, flt, get_datetime, get_link_to_form
+from frappe.utils import cstr, flt, get_datetime, get_link_to_form, cint
 
 
 class DuplicateInterviewRoundError(frappe.ValidationError):
@@ -105,8 +105,8 @@ class Interview(Document):
 	@frappe.whitelist()
 	def reschedule_interview(self, scheduled_on, from_time, to_time):
 		original_date = self.scheduled_on
-		from_time = self.from_time
-		to_time = self.to_time
+		original_from_time = self.from_time
+		original_to_time = self.to_time
 
 		self.db_set({"scheduled_on": scheduled_on, "from_time": from_time, "to_time": to_time})
 		self.notify_update()
@@ -118,7 +118,12 @@ class Interview(Document):
 				recipients=recipients,
 				subject=_("Interview: {0} Rescheduled").format(self.name),
 				message=_("Your Interview session is rescheduled from {0} {1} - {2} to {3} {4} - {5}").format(
-					original_date, from_time, to_time, self.scheduled_on, self.from_time, self.to_time
+					original_date,
+					original_from_time,
+					original_to_time,
+					self.scheduled_on,
+					self.from_time,
+					self.to_time,
 				),
 				reference_doctype=self.doctype,
 				reference_name=self.name,
@@ -158,7 +163,7 @@ def send_interview_reminder():
 		as_dict=True,
 	)
 
-	if not reminder_settings.send_interview_reminder:
+	if not cint(reminder_settings.send_interview_reminder):
 		return
 
 	remind_before = cstr(frappe.db.get_single_value("HR Settings", "remind_before")) or "01:00:00"
@@ -206,7 +211,7 @@ def send_daily_feedback_reminder():
 		as_dict=True,
 	)
 
-	if not reminder_settings.send_interview_feedback_reminder:
+	if not cint(reminder_settings.send_interview_feedback_reminder) or not reminder_settings.feedback_reminder_notification_template:
 		return
 
 	interview_feedback_template = frappe.get_doc(

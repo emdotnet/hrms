@@ -1,8 +1,6 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-import unittest
-
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, add_months, get_first_day, get_last_day, getdate
@@ -358,6 +356,9 @@ def create_leave_period(name, start_date=None):
 			to_date=add_months(start_date, 12),
 			company="_Test Company",
 			is_active=1,
+			leave_types=[{
+				"leave_type": lt.name
+			} for lt in frappe.get_all("Leave Type")]
 		)
 	).insert()
 

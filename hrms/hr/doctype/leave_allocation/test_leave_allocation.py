@@ -136,6 +136,9 @@ class TestLeaveAllocation(FrappeTestCase):
 				to_date=add_months(nowdate(), 6),
 				company="_Test Company",
 				is_active=1,
+				leave_types=[{
+					"leave_type": lt.name
+				} for lt in frappe.get_all("Leave Type")]
 			)
 		).insert()
 
@@ -173,6 +176,9 @@ class TestLeaveAllocation(FrappeTestCase):
 				to_date=add_months(nowdate(), 6),
 				company="_Test Company",
 				is_active=1,
+				leave_types=[{
+					"leave_type": lt.name
+				} for lt in frappe.get_all("Leave Type")]
 			)
 		).insert()
 

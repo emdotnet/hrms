@@ -1,5 +1,5 @@
 app_name = "hrms"
-app_title = "HRMS"
+app_title = "Frappe HR"
 app_publisher = "Frappe Technologies Pvt. Ltd."
 app_description = "Modern HR and Payroll Software"
 app_email = "contact@frappe.io"
@@ -11,7 +11,7 @@ required_apps = ["erpnext"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/hrms/css/hrms.css"
+app_include_css = "hrms.bundle.css"
 # app_include_js = "/assets/hrms/js/hrms.js"
 
 # include js, css files in header of web template
@@ -38,6 +38,12 @@ doctype_js = {
 	"Journal Entry": "public/js/journal_entry.js",
 	"Delivery Trip": "public/js/deliver_trip.js",
 	"Bank Transaction": "public/js/bank_transaction.js",
+}
+
+doctype_regional_js = {
+	"Holiday List": {
+		"France": "public/js/regional/france/holiday_list.js"
+	}
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -67,10 +73,11 @@ website_route_rules = [
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "hrms.utils.jinja_methods",
-# 	"filters": "hrms.utils.jinja_filters"
-# }
+jinja = {
+	"methods": [
+		"hrms.utils.get_country",
+	],
+}
 
 # Installation
 # ------------
@@ -153,10 +160,20 @@ doc_events = {
 	},
 	"Loan": {"validate": "hrms.hr.utils.validate_loan_repay_from_salary"},
 	"Employee": {
-		"validate": "hrms.overrides.employee_master.validate_onboarding_process",
+		"validate": [
+			"hrms.overrides.employee_master.validate_onboarding_process",
+			"hrms.overrides.employee_master.update_to_date_in_work_history",
+		],
 		"on_update": "hrms.overrides.employee_master.update_approver_role",
 		"on_trash": "hrms.overrides.employee_master.update_employee_transfer",
 	},
+	"Project": {
+		"validate": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
+	},
+	"Task": {
+		"on_update": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status",
+		"after_delete": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
+	}
 }
 
 # Scheduled Tasks
@@ -172,6 +189,7 @@ scheduler_events = {
 	],
 	"daily": [
 		"hrms.controllers.employee_reminders.send_birthday_reminders",
+		"hrms.controllers.employee_reminders.send_work_anniversary_reminders",
 		"hrms.hr.doctype.daily_work_summary_group.daily_work_summary_group.send_summary",
 		"hrms.hr.doctype.interview.interview.send_daily_feedback_reminder",
 	],
@@ -202,7 +220,7 @@ bank_reconciliation_doctypes = ["Expense Claim"]
 # Testing
 # -------
 
-before_tests = "hrms.utils.before_test.before_tests"
+before_tests = "hrms.utils.before_tests"
 
 # Overriding Methods
 # -----------------------------
@@ -215,6 +233,9 @@ regional_overrides = {
 		"hrms.hr.utils.calculate_annual_eligible_hra_exemption": "hrms.regional.india.utils.calculate_annual_eligible_hra_exemption",
 		"hrms.hr.utils.calculate_hra_exemption_for_period": "hrms.regional.india.utils.calculate_hra_exemption_for_period",
 	},
+	"France": {
+		"hrms.hr.doctype.leave_application.leave_application.get_regional_number_of_leave_days": "hrms.regional.france.hr.utils.get_regional_number_of_leave_days",
+	}
 }
 
 # ERPNext doctypes for Global Search
@@ -282,11 +303,3 @@ override_doctype_dashboards = {
 # auth_hooks = [
 # 	"hrms.auth.validate"
 # ]
-
-# Translation
-# --------------------------------
-
-# Make link fields search translated document names for these DocTypes
-# Recommended only for DocTypes which have limited documents with untranslated names
-# For example: Role, Gender, etc.
-# translated_search_doctypes = []

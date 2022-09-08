@@ -57,6 +57,8 @@ def update_employee_work_history(employee, details, date=None, cancel=False):
 			new_data = getdate(new_data)
 		elif fieldtype == "Datetime" and new_data:
 			new_data = get_datetime(new_data)
+		elif fieldtype in ["Currency", "Float"] and new_data:
+			new_data = flt(new_data)
 		setattr(employee, item.fieldname, new_data)
 		if item.fieldname in ["department", "designation", "branch"]:
 			internal_work_history[item.fieldname] = item.new
@@ -88,6 +90,7 @@ def delete_employee_work_history(details, employee, date):
 				filters["from_date"] = date
 	if filters:
 		frappe.db.delete("Employee Internal Work History", filters)
+		employee.save()
 
 
 @frappe.whitelist()
@@ -166,7 +169,7 @@ def get_doc_condition(doctype):
 def throw_overlap_error(doc, exists_for, overlap_doc, from_date, to_date):
 	msg = (
 		_("A {0} exists between {1} and {2} (").format(
-			doc.doctype, formatdate(from_date), formatdate(to_date)
+			_(doc.doctype), formatdate(from_date), formatdate(to_date)
 		)
 		+ """ <b><a href="/app/Form/{0}/{1}">{1}</a></b>""".format(doc.doctype, overlap_doc)
 		+ _(") for {0}").format(exists_for)
@@ -270,7 +273,7 @@ def generate_leave_encashment():
 
 		create_leave_encashment(leave_allocation=leave_allocation)
 
-
+@erpnext.allow_regional
 def allocate_earned_leaves():
 	"""Allocate earned leaves to Employees"""
 	e_leave_types = get_earned_leaves()
@@ -509,6 +512,9 @@ def get_holidays_for_employee(
 	"""
 	holiday_list = get_holiday_list_for_employee(employee, raise_exception=raise_exception)
 
+	if holiday_list or (frappe.db.get_value("Holiday List", holiday_list, "from_date") or end_date) > end_date:
+		holiday_list = get_previous_holiday_list(holiday_list, start_date, end_date)
+
 	if not holiday_list:
 		return []
 
@@ -517,10 +523,24 @@ def get_holidays_for_employee(
 	if only_non_weekly:
 		filters["weekly_off"] = False
 
-	holidays = frappe.get_all("Holiday", fields=["description", "holiday_date"], filters=filters)
+	holidays = frappe.get_all(
+		"Holiday", fields=["description", "holiday_date"], filters=filters, order_by="holiday_date"
+	)
 
 	return holidays
 
+def get_previous_holiday_list(holiday_list, start, end):
+	while True:
+		name, from_date, to_date, replaced_list = frappe.db.get_value(
+			"Holiday List", holiday_list, ["name", "from_date", "to_date", "replaces_holiday_list"]
+		)
+
+		if getdate(from_date) <= getdate(start) and getdate(to_date) >= getdate(end):
+			return name
+		elif not replaced_list:
+			return
+
+		holiday_list = replaced_list
 
 @erpnext.allow_regional
 def calculate_annual_eligible_hra_exemption(doc):

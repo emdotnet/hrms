@@ -35,6 +35,10 @@ def create_leave_period(from_date, to_date, company=None):
 			"from_date": from_date,
 			"to_date": to_date,
 			"is_active": 1,
+			"leave_types": [{
+				"leave_type": lt.name
+			} for lt in frappe.get_all("Leave Type")]
+
 		}
 	).insert()
 	return leave_period

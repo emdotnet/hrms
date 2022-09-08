@@ -15,8 +15,9 @@ def after_install():
 	update_hr_defaults()
 	add_non_standard_user_types()
 	set_single_defaults()
+	frappe.db.commit()
 	run_post_install_patches()
-	click.secho("Thank you for installing Frappe HR!", fg="green")
+	click.secho("Thank you for installing Dokos HR Management System!", fg="green")
 
 
 def get_custom_fields():
@@ -31,7 +32,7 @@ def get_custom_fields():
 				"oldfieldname": "employment_type",
 				"oldfieldtype": "Link",
 				"options": "Employment Type",
-				"insert_after": "employee_name",
+				"insert_after": "department",
 			},
 			{
 				"fieldname": "job_applicant",
@@ -45,7 +46,7 @@ def get_custom_fields():
 				"fieldtype": "Link",
 				"label": "Grade",
 				"options": "Employee Grade",
-				"insert_after": "column_break_31",
+				"insert_after": "branch",
 			},
 			{
 				"fieldname": "default_shift",
@@ -59,7 +60,7 @@ def get_custom_fields():
 				"fieldname": "health_insurance_section",
 				"fieldtype": "Section Break",
 				"label": "Health Insurance",
-				"insert_after": "bank_ac_no",
+				"insert_after": "health_details",
 			},
 			{
 				"fieldname": "health_insurance_provider",
@@ -79,7 +80,7 @@ def get_custom_fields():
 				"fieldname": "approvers_section",
 				"fieldtype": "Section Break",
 				"label": "Approvers",
-				"insert_after": "branch",
+				"insert_after": "default_shift",
 			},
 			{
 				"fieldname": "expense_approver",
@@ -108,13 +109,18 @@ def get_custom_fields():
 				"insert_after": "column_break_45",
 			},
 			{
+				"fieldname": "salary_cb",
+				"fieldtype": "Column Break",
+				"insert_after": "salary_mode",
+			},
+			{
 				"fetch_from": "department.payroll_cost_center",
 				"fetch_if_empty": 1,
 				"fieldname": "payroll_cost_center",
 				"fieldtype": "Link",
 				"label": "Payroll Cost Center",
 				"options": "Cost Center",
-				"insert_after": "salary_mode",
+				"insert_after": "salary_cb",
 			},
 		],
 		"Company": [
@@ -639,8 +645,13 @@ def run_post_install_patches():
 
 	POST_INSTALL_PATCHES = get_post_install_patches()
 
-	for patch in POST_INSTALL_PATCHES:
-		# patch has not run on the site before
-		if not frappe.db.exists("Patch Log", {"patch": patch}):
-			patch_name = patch.split(".")[-1]
-			frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
+	frappe.flags.in_patch = True
+
+	try:
+		for patch in POST_INSTALL_PATCHES:
+			# patch has not run on the site before
+			if not frappe.db.exists("Patch Log", {"patch": ("like", f"%{patch}%")}):
+				patch_name = patch.split(".")[-1]
+				frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
+	finally:
+		frappe.flags.in_patch = False

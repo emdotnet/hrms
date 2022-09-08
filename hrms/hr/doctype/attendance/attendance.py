@@ -20,6 +20,15 @@ class OverlappingShiftAttendanceError(frappe.ValidationError):
 	pass
 
 
+ATTENDANCE_COLOR_STATUSES = {
+	"Present": "green",
+	"Work From Home": "green",
+	"Absent": "red",
+	"On Leave": "red",
+	"Half Day": "orange",
+}
+
+
 class Attendance(Document):
 	def validate(self):
 		from erpnext.controllers.status_updater import validate_status
@@ -225,20 +234,39 @@ def get_overlapping_shift_attendance(employee, attendance_date, shift, name=None
 def get_events(start, end, filters=None):
 	events = []
 
-	employee = frappe.db.get_value("Employee", {"user_id": frappe.session.user})
-
-	if not employee:
-		return events
+	filters = frappe.parse_json(filters)
+	if not filters or not any("employee" in f for f in filters):
+		employees = frappe.db.get_list("Employee", pluck="name")
+		filters.append({"employee": ("in", employees)})
+	else:
+		employee_filter = [f for f in filters if "employee" in f][0]
+		employees = [employee_filter[3]] if isinstance(employee_filter[3], str) else employee_filter[3]
 
 	from frappe.desk.reportview import get_filters_cond
 
 	conditions = get_filters_cond("Attendance", filters, [])
 	add_attendance(events, start, end, conditions=conditions)
+
+	for employee in employees:
+		holiday_dates = get_holiday_dates_for_employee(employee, start, end)
+		for holiday_date in holiday_dates:
+			events.append(
+				{
+					"name": f"{employee}_{holiday_date}",
+					"start": getdate(holiday_date),
+					"end": getdate(holiday_date),
+					"display": "background",
+					"color": "#DCE0E3",
+					"all_day": 1,
+					"title": _("Holiday"),
+				}
+			)
+
 	return events
 
 
 def add_attendance(events, start, end, conditions=None):
-	query = """select name, attendance_date, status
+	query = """select name, attendance_date, status, employee_name
 		from `tabAttendance` where
 		attendance_date between %(from_date)s and %(to_date)s
 		and docstatus < 2"""
@@ -251,8 +279,10 @@ def add_attendance(events, start, end, conditions=None):
 			"doctype": "Attendance",
 			"start": d.attendance_date,
 			"end": d.attendance_date,
-			"title": cstr(d.status),
+			"title": f"{cstr(d.employee_name)}: {cstr(_(d.status))}",
 			"docstatus": d.docstatus,
+			"color": ATTENDANCE_COLOR_STATUSES.get(d.status),
+			"classNames": "wrapped-title",
 		}
 		if e not in events:
 			events.append(e)
@@ -300,6 +330,9 @@ def mark_bulk_attendance(data):
 
 	if isinstance(data, str):
 		data = json.loads(data)
+	if not data:
+		return
+
 	data = frappe._dict(data)
 	company = frappe.get_value("Employee", data.employee, "company")
 	if not data.unmarked_days:

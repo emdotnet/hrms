@@ -114,7 +114,7 @@ class SalarySlip(TransactionBase):
 			self.make_loan_repayment_entry()
 			if (
 				frappe.db.get_single_value("Payroll Settings", "email_salary_slip_to_employee")
-			) and not frappe.flags.via_payroll_entry:
+			) and not frappe.flags.via_payroll_entry and not frappe.flags.in_test: # TODO: Solve HostNotFoundError in CI to execute this action
 				self.email_salary_slip()
 
 		self.update_payment_status_for_gratuity()
@@ -622,11 +622,23 @@ class SalarySlip(TransactionBase):
 			self.add_tax_components(payroll_period)
 
 	def add_structure_components(self, component_type):
-		data = self.get_data_for_eval()
+		data, default_data = self.get_data_for_eval()
+		timesheet_component = frappe.db.get_value(
+			"Salary Structure", self.salary_structure, "salary_component"
+		)
+
 		for struct_row in self._salary_structure_doc.get(component_type):
+			if self.salary_slip_based_on_timesheet and struct_row.salary_component == timesheet_component:
+				continue
+
 			amount = self.eval_condition_and_formula(struct_row, data)
-			if amount is not None and struct_row.statistical_component == 0:
-				self.update_component_row(struct_row, amount, component_type, data=data)
+			if (
+				amount or (struct_row.amount_based_on_formula and amount is not None)
+			) and struct_row.statistical_component == 0:
+				default_amount = self.eval_condition_and_formula(struct_row, default_data)
+				self.update_component_row(
+					struct_row, amount, component_type, data=data, default_amount=default_amount
+				)
 
 	def get_data_for_eval(self):
 		"""Returns data for evaluating formula"""
@@ -670,11 +682,15 @@ class SalarySlip(TransactionBase):
 		for sc in salary_components:
 			data.setdefault(sc.salary_component_abbr, 0)
 
+		# shallow copy of data to store default amounts (without payment days) for tax calculation
+		default_data = data.copy()
+
 		for key in ("earnings", "deductions"):
 			for d in self.get(key):
+				default_data[d.abbr] = d.default_amount
 				data[d.abbr] = d.amount
 
-		return data
+		return data, default_data
 
 	def eval_condition_and_formula(self, d, data):
 		try:
@@ -780,7 +796,14 @@ class SalarySlip(TransactionBase):
 			self.update_component_row(tax_row, tax_amount, "deductions")
 
 	def update_component_row(
-		self, component_data, amount, component_type, additional_salary=None, is_recurring=0, data=None
+		self,
+		component_data,
+		amount,
+		component_type,
+		additional_salary=None,
+		is_recurring=0,
+		data=None,
+		default_amount=None,
 	):
 		component_row = None
 		for d in self.get(component_type):
@@ -839,7 +862,7 @@ class SalarySlip(TransactionBase):
 				additional_salary.deduct_full_tax_on_selected_payroll_date
 			)
 		else:
-			component_row.default_amount = amount
+			component_row.default_amount = default_amount or amount
 			component_row.additional_amount = 0
 			component_row.deduct_full_tax_on_selected_payroll_date = (
 				component_data.deduct_full_tax_on_selected_payroll_date
@@ -946,7 +969,7 @@ class SalarySlip(TransactionBase):
 		)
 
 		# Structured tax amount
-		eval_locals = self.get_data_for_eval()
+		eval_locals, default_data = self.get_data_for_eval()
 		total_structured_tax_amount = calculate_tax_by_tax_slab(
 			total_taxable_earnings_without_full_tax_addl_components,
 			tax_slab,
