@@ -1,13 +1,13 @@
-# Frappe HR
+# Dokos HR Management System
 
 Open Source, modern, and easy-to-use HR and Payroll Software for all organizations.
-
-[![CI](https://github.com/frappe/hrms/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/frappe/hrms/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/frappe/hrms/branch/develop/graph/badge.svg?token=0TwvyUg3I5)](https://codecov.io/gh/frappe/hrms)
+Based on [Frappe HR](https://github.com/frappe/hrms)
 
 ## Introduction
 
-Frappe HR has everything you need to drive excellence within the company. It's a complete HRMS solution with over 13 different modules right from Employee Management, Onboarding, Leaves, to Payroll, Taxation, and more!
+Dokos HRMS offers over 13 different modules from Employee Management to Onboarding, Leaves, Payroll or Taxation.
+
+> Warning: Some functionalities may not be applicable for all countries
 
 ![HRMS](hrms.png)
 
@@ -29,9 +29,9 @@ Frappe HR has everything you need to drive excellence within the company. It's a
 
 ## Installation
 
-1. [Install bench](https://github.com/frappe/bench).
-2. [Install ERPNext](https://github.com/frappe/bench#installation).
-3. Once ERPNext is installed, add the hrms app to your bench by running
+1. [Install Dokos Cli and Dodock](https://doc.dokos.io/fr/getting-started).
+2. [Install Dokos](https://gitlab.com/dokos/dokos).
+3. Once Dokos is installed, add the HRMS application to your bench by running
 
     ```sh
     $ bench get-app hrms
@@ -43,10 +43,10 @@ Frappe HR has everything you need to drive excellence within the company. It's a
 
 ## Documentation
 
-Complete documentation for Frappe HR is available at https://docs.erpnext.com/docs/user/manual/en/human-resources
+The documentation for HRMS is avaiable at https://doc.dokos.io/
 
 ## License
 
 GNU GPL V3. (See [license.txt](license.txt) for more information).
 
-The HR code is licensed as GNU General Public License (v3) and the copyright is owned by Frappe Technologies Pvt Ltd (Frappe) and Contributors.
+The HRMS code is licensed as GNU General Public License (v3) and the copyright is owned by Frappe Technologies Pvt Ltd (Frappe), Dokos SAS and Contributors.
