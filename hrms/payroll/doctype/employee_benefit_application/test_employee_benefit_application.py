@@ -33,7 +33,7 @@ class TestEmployeeBenefitApplication(FrappeTestCase):
 
 	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_employee_benefit_application(self):
-		payroll_period = create_payroll_period(name="_Test Payroll Period 1", company="_Test Company")
+		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")
 		employee = make_employee("test_employee_benefits@salary.com", company="_Test Company")
 		first_sunday = get_first_sunday("Salary Slip Test Holiday List")
 

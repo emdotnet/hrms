@@ -616,7 +616,7 @@ class TestSalarySlip(FrappeTestCase):
 			penalty_income_account="Penalty Income Account - _TC",
 		)
 
-		payroll_period = create_payroll_period(name="_Test Payroll Period 1", company="_Test Company")
+		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")
 
 		make_salary_structure(
 			"Test Loan Repayment Salary Structure",
@@ -708,7 +708,7 @@ class TestSalarySlip(FrappeTestCase):
 
 		applicant = make_employee("test_ytd@salary.com", company="_Test Company")
 
-		payroll_period = create_payroll_period(name="_Test Payroll Period 1", company="_Test Company")
+		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")
 
 		create_tax_slab(
 			payroll_period,
@@ -752,7 +752,7 @@ class TestSalarySlip(FrappeTestCase):
 		employee_name = "test_component_wise_ytd@salary.com"
 		applicant = make_employee(employee_name, company="_Test Company")
 
-		payroll_period = create_payroll_period(name="_Test Payroll Period 1", company="_Test Company")
+		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")
 
 		create_tax_slab(
 			payroll_period,

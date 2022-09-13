@@ -89,3 +89,8 @@ def set_defaults_for_tests():
 	system_settings.float_precision = 2
 	system_settings.currency_precision = 2
 	system_settings.save()
+
+	defaults = frappe.get_doc("Global Defaults", "Global Defaults")
+	defaults.default_company = "_Test Company"
+	defaults.flags.ignore_links = True
+	defaults.save()
