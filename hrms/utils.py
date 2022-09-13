@@ -65,7 +65,7 @@ def before_tests():
 			{
 				"currency": "INR",
 				"full_name": "Test User",
-				"company_name": "Wind Power LLC",
+				"company_name": "_Test Company",
 				"timezone": "Asia/Kolkata",
 				"company_abbr": "WP",
 				"industry": "Manufacturing",
