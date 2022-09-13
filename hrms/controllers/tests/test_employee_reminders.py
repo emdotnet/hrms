@@ -13,6 +13,7 @@ from hrms.controllers.employee_reminders import send_holidays_reminder_in_advanc
 from hrms.hr.doctype.hr_settings.hr_settings import set_proceed_with_frequency_change
 from hrms.hr.utils import get_holidays_for_employee
 
+test_dependencies = ["Employee"]
 
 class TestEmployeeReminders(unittest.TestCase):
 	@classmethod
