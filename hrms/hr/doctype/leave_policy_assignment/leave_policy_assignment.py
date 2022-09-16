@@ -10,6 +10,8 @@ from frappe import _, bold
 from frappe.model.document import Document
 from frappe.utils import date_diff, flt, formatdate, get_last_day, get_link_to_form, getdate
 
+from hrms.hr.doctype.leave_type.leave_type import STANDARD_EARNED_LEAVES_FREQUENCIES
+
 
 class LeavePolicyAssignment(Document):
 	def validate(self):
@@ -133,7 +135,7 @@ class LeavePolicyAssignment(Document):
 			new_leaves_allocated = 0
 
 		elif leave_type_details.get(leave_type).is_earned_leave == 1:
-			if not self.assignment_based_on:
+			if not self.assignment_based_on or leave_type_details.get(leave_type).earned_leave_frequency not in STANDARD_EARNED_LEAVES_FREQUENCIES:
 				new_leaves_allocated = 0
 			else:
 				# get leaves for past months if assignment is based on Leave Period / Joining Date

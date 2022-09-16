@@ -88,7 +88,7 @@ frappe.listview_settings['Leave Policy Assignment'] = {
 					};
 				},
 				add_filters_group: 1,
-				primary_action_label: "Assign",
+				primary_action_label: __("Assign"),
 				action(employees, data) {
 					frappe.call({
 						method: 'hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment.create_assignment_for_multiple_employees',

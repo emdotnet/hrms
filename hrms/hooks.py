@@ -12,7 +12,7 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 app_include_css = "hrms.bundle.css"
-# app_include_js = "/assets/hrms/js/hrms.js"
+app_include_js = "hrms.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/hrms/css/hrms.css"
@@ -43,6 +43,9 @@ doctype_js = {
 doctype_regional_js = {
 	"Holiday List": {
 		"France": "public/js/regional/france/holiday_list.js"
+	},
+	"Leave Type": {
+		"France": "public/js/regional/france/leave_type.js"
 	}
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
