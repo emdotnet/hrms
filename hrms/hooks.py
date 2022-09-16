@@ -238,6 +238,7 @@ regional_overrides = {
 	},
 	"France": {
 		"hrms.hr.doctype.leave_application.leave_application.get_regional_number_of_leave_days": "hrms.regional.france.hr.utils.get_regional_number_of_leave_days",
+		"hrms.hr.utils.allocate_earned_leaves": "hrms.regional.france.hr.utils.allocate_earned_leaves",
 	}
 }
 

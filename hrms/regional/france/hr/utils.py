@@ -2,6 +2,7 @@
 # License: See license.txt
 
 import math
+from datetime import timedelta
 from typing import Optional
 
 import frappe
@@ -16,21 +17,19 @@ from hrms.hr.utils import (
 )
 
 
-def allocate_earned_leaves():
-	FranceLeaveAllocator(FranceLeaveCalculator).allocate()
+def allocate_earned_leaves(date=None):
+	EarnedLeaveAllocator(date).allocate()
 
 class EarnedLeaveAllocator:
-	def __init__(self, calculator, date=None):
-		self.calculator = calculator
+	def __init__(self, date=None):
 		self.e_leave_types = get_earned_leaves()
 		self.today = getdate(date or nowdate())
 
 	def allocate(self):
 		for e_leave_type in self.e_leave_types:
 			leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
-
 			for allocation in leave_allocations:
-				self.calculator(self, e_leave_type, allocation).calculate_allocation()
+				EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
 
 
 class EarnedLeaveCalculator:
@@ -39,40 +38,38 @@ class EarnedLeaveCalculator:
 		self.parent = parent
 		self.leave_type = leave_type
 		self.allocation = allocation
-		self.leave_policy = None
 		self.annual_allocation = []
 		self.attendance = {}
 		self.earneable_leaves = 0
 		self.earned_leaves = 0
 
-		self.formula_map = {}
+		self.formula_map = {
+			"Congés payés sur jours ouvrables": self.conges_payes_ouvrables,
+			"Congés payés sur jours ouvrés": self.conges_payes_ouvres,
+		}
 		self.divide_by_frequency = {"Yearly": 1, "Half-Yearly": 6, "Quarterly": 4, "Monthly": 12}
 
 	def calculate_allocation(self):
-		if not self.allocation.leave_policy_assignment and not self.allocation.leave_policy:
-			return
-
-		self.leave_policy = (
-			self.allocation.leave_policy
-			if self.allocation.leave_policy
-			else frappe.db.get_value(
-				"Leave Policy Assignment", self.allocation.leave_policy_assignment, ["leave_policy"]
+		if self.allocation.leave_policy_assignment and self.allocation.leave_policy:
+			leave_policy = (
+				self.allocation.leave_policy
+				if self.allocation.leave_policy
+				else frappe.db.get_value(
+					"Leave Policy Assignment", self.allocation.leave_policy_assignment, ["leave_policy"]
+				)
 			)
-		)
 
-		self.annual_allocation = frappe.db.get_value(
-			"Leave Policy Detail",
-			filters={"parent": self.leave_policy, "leave_type": self.leave_type.name},
-			fieldname=["annual_allocation"],
-		)
+			self.annual_allocation = frappe.db.get_value(
+				"Leave Policy Detail",
+				filters={"parent": leave_policy, "leave_type": self.leave_type.name},
+				fieldname=["annual_allocation"],
+			)
+		else:
+			self.annual_allocation = self.leave_type.max_leaves_allowed
 
 		if self.annual_allocation:
 			self.earneable_leaves = flt(self.annual_allocation) / 12
-			self.attendance = get_attendance(
-				self.allocation.employee,
-				self.allocation.from_date,
-				min(self.parent.today, self.allocation.to_date),
-			)
+			self.get_attendance()
 
 			if (
 				self.leave_type.earned_leave_frequency in ("Congés payés sur jours ouvrables", "Congés payés sur jours ouvrés")
@@ -114,20 +111,6 @@ class EarnedLeaveCalculator:
 		)
 
 		allocation.add_comment(comment_type="Info", text=text)
-
-
-class FranceLeaveAllocator(EarnedLeaveAllocator):
-	def __init__(self, calculator, date=None):
-		super(FranceLeaveAllocator, self).__init__(calculator, date)
-
-
-class FranceLeaveCalculator(EarnedLeaveCalculator):
-	def __init__(self, parent, leave_type, allocation):
-		super(FranceLeaveCalculator, self).__init__(parent, leave_type, allocation)
-		self.formula_map = {
-			"Congés payés sur jours ouvrables": self.conges_payes_ouvrables,
-			"Congés payés sur jours ouvrés": self.conges_payes_ouvres,
-		}
 
 	def conges_payes_ouvrables(self):
 		self.earned_leaves = self.earneable_leaves * flt(
@@ -172,6 +155,77 @@ class FranceLeaveCalculator(EarnedLeaveCalculator):
 		)
 
 		allocation.add_comment(comment_type="Info", text=text)
+
+	def get_attendance(self):
+		self.excluded_leave_types = [
+			x.name for x in frappe.get_all("Leave Type", filters={"exclude_from_leave_acquisition": 1})
+		]
+
+		end_date = min(self.parent.today, self.allocation.to_date)
+
+		attendance = frappe.get_all(
+			"Attendance",
+			filters={
+				"docstatus": 1,
+				"employee": self.allocation.employee,
+				"attendance_date": ("between", [self.allocation.start_date, end_date])
+			},
+			fields=["name", "attendance_date", "status", "leave_type"],
+		)
+
+		if frappe.db.get_single_value("HR Settings", "calculate_attendances"):
+			return self.calculate_attendance(attendance)
+
+		attendance = [
+			x for x in attendance if not (
+				(x.status == "On Leave" and x.leave_type in self.excluded_leave_types)
+				or x.status == "Absent"
+			)
+		]
+
+		self.attendance = {
+			"dates": attendance,
+			"weeks": len([x.attendance_date for x in attendance]) / 7,
+		}
+
+	def calculate_attendance(self, attendance):
+		employee_doc = frappe.get_doc("Employee", self.allocation.employee)
+		start_date = self.allocation.from_date
+		end_date = min(self.parent.today, self.allocation.to_date)
+		if employee_doc.date_of_joining:
+			start_date = max(start_date, employee_doc.date_of_joining)
+		if employee_doc.relieving_date:
+			end_date = min(end_date, employee_doc.relieving_date)
+
+		attendance_dates = [x.attendance_date for x in attendance if not (
+				(x.status == "On Leave" and x.leave_type in self.excluded_leave_types)
+				or x.status == "Absent"
+			)
+		]
+
+		absence_dates = [x.attendance_date for x in attendance if (
+				(x.status == "On Leave" and x.leave_type in self.excluded_leave_types)
+				or x.status == "Absent"
+			)
+		]
+
+		holidays = [d.holiday_date for d in get_holidays_for_employee(self.allocation.employee, start_date, end_date)]
+
+		attendances = []
+
+		for date in daterange(start_date, end_date):
+			current_date = getdate(date)
+			if current_date in attendance_dates:
+				attendances.append(current_date)
+			elif current_date in holidays or current_date in absence_dates:
+				continue
+			else:
+				attendances.append(current_date)
+
+		self.attendance = {
+			"dates": attendances,
+			"weeks": len(attendances) / 7,
+		}
 
 
 def get_regional_number_of_leave_days(
@@ -227,26 +281,6 @@ def get_regional_number_of_leave_days(
 
 	return number_of_days
 
-def get_attendance(employee, start_date, end_date):
-	excluded_leave_types = [
-		x.name for x in frappe.get_all("Leave Type", filters={"exclude_from_leave_acquisition": 1})
-	]
-
-	attendance = frappe.get_all(
-		"Attendance",
-		filters={
-			"docstatus": 1,
-			"employee": employee,
-			"attendance_date": ("between", [start_date, end_date]),
-			"status": ("!=", "Absent"),
-		},
-		fields=["name", "attendance_date", "status", "leave_type"],
-	)
-	attendance = [
-		x for x in attendance if not (x.status == "On Leave" and x.leave_type in excluded_leave_types)
-	]
-
-	return {
-		"dates": attendance,
-		"weeks": len([x.attendance_date for x in attendance]) / 7,
-	}
+def daterange(start_date, end_date):
+	for n in range(int((end_date - start_date).days) + 1):
+		yield start_date + timedelta(n)

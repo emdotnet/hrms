@@ -21,6 +21,7 @@
   "allow_negative",
   "allow_over_allocation",
   "include_holiday",
+  "exclude_from_leave_acquisition",
   "is_compensatory",
   "carry_forward_section",
   "maximum_carry_forwarded_leaves",
@@ -219,12 +220,18 @@
    "fieldname": "allow_over_allocation",
    "fieldtype": "Check",
    "label": "Allow Over Allocation"
+  },
+  {
+   "default": "0",
+   "fieldname": "exclude_from_leave_acquisition",
+   "fieldtype": "Check",
+   "label": "Exclude from leave acquisition"
   }
  ],
  "icon": "fa fa-flag",
  "idx": 1,
  "links": [],
- "modified": "2022-05-09 05:01:38.957545",
+ "modified": "2022-09-16 20:20:13.854817",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Type",

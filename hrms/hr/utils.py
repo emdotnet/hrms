@@ -512,8 +512,9 @@ def get_holidays_for_employee(
 	"""
 	holiday_list = get_holiday_list_for_employee(employee, raise_exception=raise_exception)
 
-	if holiday_list or (frappe.db.get_value("Holiday List", holiday_list, "from_date") or end_date) > end_date:
-		holiday_list = get_previous_holiday_list(holiday_list, start_date, end_date)
+	if holiday_list and (holiday_list_start := frappe.db.get_value("Holiday List", holiday_list, "from_date")):
+		if holiday_list_start > getdate(end_date):
+			holiday_list = get_previous_holiday_list(holiday_list, start_date, end_date)
 
 	if not holiday_list:
 		return []

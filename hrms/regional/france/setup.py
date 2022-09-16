@@ -4,9 +4,11 @@
 import frappe
 from frappe import _, make_property_setter
 from frappe.permissions import setup_custom_perms
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 def setup(company=None, patch=True):
 	make_property_setters()
+	make_custom_fields()
 	setup_default_leaves()
 	setup_document_permissions()
 
@@ -39,6 +41,13 @@ def make_property_setters():
 			"property": "depends_on",
 			"value": "eval:doc.is_earned_leave&&['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'].includes(doc.earned_leave_frequency)",
 			"property_type": "Code",
+		},
+		{
+			"doctype": "HR Settings",
+			"fieldname": "auto_leave_encashment",
+			"property": "hidden",
+			"value": "1",
+			"property_type": "Check",
 		}
 	]
 	for property_setter in property_setters:
@@ -46,6 +55,22 @@ def make_property_setters():
 			property_setter,
 			is_system_generated=True,
 		)
+
+def make_custom_fields(update=True):
+	# Keep for translations: _("")
+	custom_fields = {
+		"HR Settings": [
+			dict(
+				fieldname="calculate_attendances",
+				label="Calculate attendances",
+				description="Attendances for each employee will be calculated and don't need to be explicitely registered",
+				fieldtype="Check",
+				insert_after="auto_leave_encashment"
+			)
+		],
+	}
+
+	create_custom_fields(custom_fields, ignore_validate=frappe.flags.in_patch, update=update)
 
 def setup_default_leaves():
 	leave_types = [
@@ -64,10 +89,10 @@ def setup_default_leaves():
 			"leave_type_name": _("Congés Payés"),
 			"name": _("Congés Payés"),
 			"allow_encashment": 0,
-			"is_carry_forward": 0,
+			"is_carry_forward": 1,
 			"include_holiday": 0,
 			"is_compensatory": 0,
-			"max_leaves_allowed": 30,
+			"max_leaves_allowed": 25,
 			"allow_negative": 1,
 			"is_earned_leave": 1,
 			"earned_leave_frequency": "Congés payés sur jours ouvrables",
@@ -81,8 +106,7 @@ def setup_default_leaves():
 			"include_holiday": 0,
 			"is_compensatory": 0,
 			"max_leaves_allowed": 0,
-			"allow_negative": 1,
-			"is_lwp": 1,
+			"allow_negative": 1
 		},
 	]
 
@@ -93,7 +117,7 @@ def setup_default_leaves():
 	policy = {
 		"doctype": "Leave Policy",
 		"title": _("Congés Payés"),
-		"leave_policy_details": [{"leave_type": _("Congés Payés"), "annual_allocation": 30}],
+		"leave_policy_details": [{"leave_type": _("Congés Payés"), "annual_allocation": 25}],
 	}
 
 	doc = frappe.get_doc(policy)
