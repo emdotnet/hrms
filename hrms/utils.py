@@ -66,7 +66,7 @@ def before_tests():
 				"currency": "INR",
 				"full_name": "Test User",
 				"company_name": "Wind Power LLC",
-				"timezone": "Asia/Kolkata",
+				"timezone": "UTC",
 				"company_abbr": "WP",
 				"industry": "Manufacturing",
 				"country": "India",
@@ -89,3 +89,9 @@ def set_defaults_for_tests():
 	system_settings.float_precision = 2
 	system_settings.currency_precision = 2
 	system_settings.save()
+
+	defaults = frappe.get_doc("Global Defaults", "Global Defaults")
+	defaults.default_company = "_Test Company"
+	defaults.current_fiscal_year = "2022"
+	defaults.flags.ignore_links = True
+	defaults.save()

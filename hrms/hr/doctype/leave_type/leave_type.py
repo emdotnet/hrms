@@ -7,6 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import today
 
+STANDARD_EARNED_LEAVES_FREQUENCIES = ["Monthly", "Quarterly", "Half-Yearly", "Yearly"]
 
 class LeaveType(Document):
 	def validate(self):

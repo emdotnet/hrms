@@ -13,6 +13,7 @@ from hrms.controllers.employee_reminders import send_holidays_reminder_in_advanc
 from hrms.hr.doctype.hr_settings.hr_settings import set_proceed_with_frequency_change
 from hrms.hr.utils import get_holidays_for_employee
 
+test_dependencies = ["Employee"]
 
 class TestEmployeeReminders(unittest.TestCase):
 	@classmethod
@@ -37,7 +38,7 @@ class TestEmployeeReminders(unittest.TestCase):
 
 		# Create a test employee
 		test_employee = frappe.get_doc(
-			"Employee", make_employee("test@gopher.io", company="Wind Power LLC")
+			"Employee", make_employee("test@gopher.io", company="_Test Company")
 		)
 
 		# Attach the holiday list to employee
@@ -49,7 +50,7 @@ class TestEmployeeReminders(unittest.TestCase):
 		cls.test_holiday_dates = test_holiday_dates
 
 		# Employee without holidays in this month/week
-		test_employee_2 = make_employee("test@empwithoutholiday.io", company="Wind Power LLC")
+		test_employee_2 = make_employee("test@empwithoutholiday.io", company="_Test Company")
 		test_employee_2 = frappe.get_doc("Employee", test_employee_2)
 
 		test_holiday_list = make_holiday_list(
@@ -107,7 +108,7 @@ class TestEmployeeReminders(unittest.TestCase):
 		)
 		employee.date_of_birth = "1992" + frappe.utils.nowdate()[4:]
 		employee.company_email = "test@example.com"
-		employee.company = "Wind Power LLC"
+		employee.company = "_Test Company"
 		employee.save()
 
 		from hrms.controllers.employee_reminders import (
@@ -116,7 +117,7 @@ class TestEmployeeReminders(unittest.TestCase):
 		)
 
 		employees_born_today = get_employees_who_are_born_today()
-		self.assertTrue(employees_born_today.get("Wind Power LLC"))
+		self.assertTrue(employees_born_today.get("_Test Company"))
 
 		hr_settings = frappe.get_doc("HR Settings", "HR Settings")
 		hr_settings.send_birthday_reminders = 1
@@ -135,12 +136,12 @@ class TestEmployeeReminders(unittest.TestCase):
 
 		make_employee(
 			"test_emp_work_anniversary@gmail.com",
-			company="Wind Power LLC",
+			company="_Test Company",
 			date_of_joining=frappe.utils.add_years(getdate(), -2),
 		)
 
 		employees_having_work_anniversary = get_employees_having_an_event_today("work_anniversary")
-		employees = employees_having_work_anniversary.get("Wind Power LLC") or []
+		employees = employees_having_work_anniversary.get("_Test Company") or []
 		user_ids = []
 		for entry in employees:
 			user_ids.append(entry.user_id)
@@ -160,13 +161,13 @@ class TestEmployeeReminders(unittest.TestCase):
 		make_employee(
 			"test_work_anniversary_2@gmail.com",
 			date_of_joining=getdate(),
-			company="Wind Power LLC",
+			company="_Test Company",
 		)
 
 		from hrms.controllers.employee_reminders import get_employees_having_an_event_today
 
 		employees_having_work_anniversary = get_employees_having_an_event_today("work_anniversary")
-		employees = employees_having_work_anniversary.get("Wind Power LLC") or []
+		employees = employees_having_work_anniversary.get("_Test Company") or []
 		user_ids = []
 		for entry in employees:
 			user_ids.append(entry.user_id)

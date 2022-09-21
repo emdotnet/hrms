@@ -1,6 +1,8 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+import copy
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -381,7 +383,8 @@ def is_earned_leave_already_allocated(allocation, annual_allocation):
 
 def get_leave_allocations(date, leave_type):
 	return frappe.db.sql(
-		"""select name, employee, from_date, to_date, leave_policy_assignment, leave_policy
+		"""select name, employee, from_date, to_date, leave_policy_assignment, leave_policy,
+		company, leave_type, new_leaves_allocated, total_leaves_allocated
 		from `tabLeave Allocation`
 		where
 			%s between from_date and to_date and docstatus=1
@@ -510,37 +513,43 @@ def get_holidays_for_employee(
 
 	return: list of dicts with `holiday_date` and `description`
 	"""
+	holiday_lists = []
 	holiday_list = get_holiday_list_for_employee(employee, raise_exception=raise_exception)
 
-	if holiday_list or (frappe.db.get_value("Holiday List", holiday_list, "from_date") or end_date) > end_date:
-		holiday_list = get_previous_holiday_list(holiday_list, start_date, end_date)
+	if holiday_list:
+		holiday_lists.append(holiday_list)
 
-	if not holiday_list:
+		while holiday_list:
+			current_holiday_list = holiday_list
+			holiday_list_starts_end = frappe.db.get_value("Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True)
+			if holiday_list_starts_end.get("from_date") > getdate(start_date):
+				if prev_holiday_list := frappe.db.get_value("Holiday List", holiday_list, "replaces_holiday_list"):
+					if prev_holiday_list not in holiday_lists:
+						holiday_lists.append(prev_holiday_list)
+						holiday_list = prev_holiday_list
+
+			if holiday_list_starts_end.get("to_date") < getdate(end_date):
+				if next_holiday_list := frappe.db.get_value("Holiday List", dict(replaces_holiday_list=holiday_list)):
+					if next_holiday_list not in holiday_lists:
+						holiday_lists.append(next_holiday_list)
+						holiday_list = next_holiday_list
+
+			if holiday_list == current_holiday_list:
+				break
+
+	if not holiday_lists:
 		return []
 
-	filters = {"parent": holiday_list, "holiday_date": ("between", [start_date, end_date])}
+	filters = {"parent": ("in", holiday_lists), "holiday_date": ("between", [start_date, end_date])}
 
 	if only_non_weekly:
 		filters["weekly_off"] = False
 
 	holidays = frappe.get_all(
-		"Holiday", fields=["description", "holiday_date"], filters=filters, order_by="holiday_date"
+		"Holiday", fields=["description", "holiday_date", "weekly_off"], filters=filters, order_by="holiday_date"
 	)
 
 	return holidays
-
-def get_previous_holiday_list(holiday_list, start, end):
-	while True:
-		name, from_date, to_date, replaced_list = frappe.db.get_value(
-			"Holiday List", holiday_list, ["name", "from_date", "to_date", "replaces_holiday_list"]
-		)
-
-		if getdate(from_date) <= getdate(start) and getdate(to_date) >= getdate(end):
-			return name
-		elif not replaced_list:
-			return
-
-		holiday_list = replaced_list
 
 @erpnext.allow_regional
 def calculate_annual_eligible_hra_exemption(doc):

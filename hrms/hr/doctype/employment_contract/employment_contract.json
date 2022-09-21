@@ -10,6 +10,7 @@
   "naming_series",
   "employee",
   "employee_name",
+  "company",
   "column_break_3",
   "contract_type",
   "designation",
@@ -130,6 +131,8 @@
    "label": "Monday"
   },
   {
+   "fetch_from": "employee.date_of_joining",
+   "fetch_if_empty": 1,
    "fieldname": "date_of_joining",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -148,14 +151,23 @@
    "in_list_view": 1,
    "label": "Employee Name",
    "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-11-10 16:05:26.157935",
+ "modified": "2022-09-19 21:04:03.745802",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Employment Contract",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -173,6 +185,7 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "designation",
  "track_changes": 1
 }

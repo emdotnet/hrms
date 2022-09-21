@@ -43,7 +43,7 @@ class TestIncomeTaxComputation(unittest.TestCase):
 		)
 
 		self.payroll_period = create_payroll_period(
-			name="_Test Payroll Period 1", company="_Test Company"
+			name="_Test Payroll Period", company="_Test Company"
 		)
 
 		self.income_tax_slab = create_tax_slab(

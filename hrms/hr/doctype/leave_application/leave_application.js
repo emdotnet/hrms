@@ -52,7 +52,7 @@ frappe.ui.form.on("Leave Application", {
 	make_dashboard: function(frm) {
 		var leave_details;
 		let lwps;
-		if (frm.doc.employee && frm.doc.from_date) {
+		if (frm.doc.employee) {
 			frappe.call({
 				method: "hrms.hr.doctype.leave_application.leave_application.get_leave_details",
 				async: false,
@@ -108,6 +108,8 @@ frappe.ui.form.on("Leave Application", {
 				frm.set_value('employee', perm['Employee'].map(perm_doc => perm_doc.doc)[0]);
 			}
 		}
+
+		frm.trigger("make_dashboard");
 	},
 
 	employee: function(frm) {

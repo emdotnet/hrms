@@ -12,7 +12,7 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 app_include_css = "hrms.bundle.css"
-# app_include_js = "/assets/hrms/js/hrms.js"
+app_include_js = "hrms.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/hrms/css/hrms.css"
@@ -43,6 +43,9 @@ doctype_js = {
 doctype_regional_js = {
 	"Holiday List": {
 		"France": "public/js/regional/france/holiday_list.js"
+	},
+	"Leave Type": {
+		"France": "public/js/regional/france/leave_type.js"
 	}
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -171,8 +174,8 @@ doc_events = {
 		"validate": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
 	},
 	"Task": {
-		"on_update": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status",
-		"after_delete": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"
+		"on_update": "hrms.controllers.employee_boarding_controller.update_task",
+		"after_delete": "hrms.controllers.employee_boarding_controller.update_task"
 	}
 }
 
@@ -235,6 +238,7 @@ regional_overrides = {
 	},
 	"France": {
 		"hrms.hr.doctype.leave_application.leave_application.get_regional_number_of_leave_days": "hrms.regional.france.hr.utils.get_regional_number_of_leave_days",
+		"hrms.hr.utils.allocate_earned_leaves": "hrms.regional.france.hr.utils.allocate_earned_leaves",
 	}
 }
 
