@@ -518,14 +518,24 @@ def get_holidays_for_employee(
 
 	if holiday_list:
 		holiday_lists.append(holiday_list)
-		holiday_list_starts_end = frappe.db.get_value("Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True)
 
-		if holiday_list_starts_end.get("from_date") > getdate(start_date):
-			if prev_holiday_list := frappe.db.get_value("Holiday List", holiday_list, "replaces_holiday_list"):
-				holiday_lists.append(prev_holiday_list)
-		if holiday_list_starts_end.get("to_date") < getdate(end_date):
-			if next_holiday_list := frappe.db.get_value("Holiday List", dict(replaces_holiday_list=holiday_list)):
-				holiday_lists.append(next_holiday_list)
+		while holiday_list:
+			current_holiday_list = holiday_list
+			holiday_list_starts_end = frappe.db.get_value("Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True)
+			if holiday_list_starts_end.get("from_date") > getdate(start_date):
+				if prev_holiday_list := frappe.db.get_value("Holiday List", holiday_list, "replaces_holiday_list"):
+					if prev_holiday_list not in holiday_lists:
+						holiday_lists.append(prev_holiday_list)
+						holiday_list = prev_holiday_list
+
+			if holiday_list_starts_end.get("to_date") < getdate(end_date):
+				if next_holiday_list := frappe.db.get_value("Holiday List", dict(replaces_holiday_list=holiday_list)):
+					if next_holiday_list not in holiday_lists:
+						holiday_lists.append(next_holiday_list)
+						holiday_list = next_holiday_list
+
+			if holiday_list == current_holiday_list:
+				break
 
 	if not holiday_lists:
 		return []

@@ -110,7 +110,7 @@ class EarnedLeaveCalculator:
 
 		allocation_difference = flt(new_allocation) - flt(allocation.total_leaves_allocated)
 
-		allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
+		allocation.db_set("total_leaves_allocated", flt(new_allocation, 2), update_modified=False)
 		create_additional_leave_ledger_entry(allocation, allocation_difference, self.parent.today)
 
 		text = _("allocated {0} leave(s) via scheduler on {1}").format(
@@ -160,7 +160,8 @@ class EarnedLeaveCalculator:
 
 		allocation_difference = flt(new_allocation) - flt(allocation.total_leaves_allocated)
 
-		allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
+		allocation.db_set("total_leaves_allocated", flt(new_allocation, 2), update_modified=False)
+
 		create_additional_leave_ledger_entry(allocation, allocation_difference, self.parent.today)
 
 		text = _("allocated {0} leave(s) via scheduler on {1}").format(

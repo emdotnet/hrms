@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, getdate
+from frappe.utils import add_days, getdate, flt
 
 from hrms.hr.doctype.leave_allocation.leave_allocation import get_previous_allocation
 from hrms.hr.doctype.leave_application.leave_application import (
@@ -217,7 +217,6 @@ def get_allocated_and_expired_leaves(
 	carry_forwarded_leaves = 0
 
 	records = get_leave_ledger_entries(from_date, to_date, employee, leave_type)
-
 	for record in records:
 		# new allocation records with `is_expired=1` are created when leave expires
 		# these new records should not be considered, else it leads to negative leave balance
@@ -228,7 +227,7 @@ def get_allocated_and_expired_leaves(
 			# leave allocations ending before to_date, reduce leaves taken within that period
 			# since they are already used, they won't expire
 			expired_leaves += record.leaves
-			expired_leaves += get_leaves_for_period(employee, leave_type, record.from_date, record.to_date)
+			# expired_leaves += get_leaves_for_period(employee, leave_type, record.from_date, record.to_date)
 
 		if record.from_date >= getdate(from_date):
 			if record.is_carry_forward:
@@ -236,7 +235,7 @@ def get_allocated_and_expired_leaves(
 			else:
 				new_allocation += record.leaves
 
-	return new_allocation, expired_leaves, carry_forwarded_leaves
+	return flt(new_allocation, 2), flt(expired_leaves, 2), flt(carry_forwarded_leaves, 2)
 
 
 def get_leave_ledger_entries(

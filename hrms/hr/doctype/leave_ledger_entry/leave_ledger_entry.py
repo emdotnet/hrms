@@ -182,6 +182,7 @@ def get_remaining_leaves(allocation):
 def expire_allocation(allocation, expiry_date=None):
 	"""expires non-carry forwarded allocation"""
 	leaves = get_remaining_leaves(allocation)
+
 	expiry_date = expiry_date if expiry_date else allocation.to_date
 
 	# allows expired leaves entry to be created/reverted
