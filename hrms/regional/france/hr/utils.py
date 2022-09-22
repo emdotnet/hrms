@@ -97,6 +97,7 @@ class EarnedLeaveCalculator:
 				self.allocate_earned_leaves()
 
 	def allocate_earned_leaves(self):
+		# TODO: merge with allocate_earned_leaves_based_on_formula
 		allocation = frappe.get_doc("Leave Allocation", self.allocation.name)
 		new_allocation = flt(allocation.new_leaves_allocated) + flt(self.earned_leaves)
 
@@ -158,11 +159,12 @@ class EarnedLeaveCalculator:
 		if getdate(self.parent.today) >= getdate(allocation.to_date):
 			new_allocation = math.ceil(flt(new_allocation))
 
-		allocation_difference = flt(new_allocation) - flt(allocation.total_leaves_allocated)
+		allocation_difference = flt(new_allocation) - flt(allocation.total_leaves_allocated) + flt(allocation.unused_leaves)
 
-		allocation.db_set("total_leaves_allocated", flt(new_allocation, 2), update_modified=False)
+		allocation.db_set("total_leaves_allocated", flt(new_allocation, 2) + flt(allocation.unused_leaves, 2), update_modified=False)
 
 		create_additional_leave_ledger_entry(allocation, allocation_difference, self.parent.today)
+
 
 		text = _("allocated {0} leave(s) via scheduler on {1}").format(
 			frappe.bold(self.earned_leaves), frappe.bold(formatdate(self.parent.today))
