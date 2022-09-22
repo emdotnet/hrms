@@ -334,7 +334,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		unused_leaves = {
 			2018: 0,
 			2019: 9,
-			2020: 13,
+			2020: 22,
 		}
 
 		current_year = None
