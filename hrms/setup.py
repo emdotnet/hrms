@@ -7,8 +7,6 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.desk.page.setup_wizard.setup_wizard import make_records
 from frappe.installer import update_site_config
 
-from hrms.subscription_utils import update_erpnext_access
-
 
 def after_install():
 	create_custom_fields(get_custom_fields())
@@ -17,7 +15,6 @@ def after_install():
 	update_hr_defaults()
 	add_non_standard_user_types()
 	set_single_defaults()
-	update_erpnext_access()
 	frappe.db.commit()
 	run_post_install_patches()
 	click.secho("Thank you for installing Dokos HR Management System!", fg="green")
