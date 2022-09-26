@@ -88,6 +88,6 @@ def get_approvers(doctype, txt, searchfield, start, page_len, filters):
 		)
 		if department_list:
 			error_msg += " " + _("or for Department: {0}").format(frappe.bold(employee_department))
-		frappe.throw(error_msg, title=_(field_name + " Missing"))
+		frappe.throw(error_msg, title=_("{0} Missing").format(field_name))
 
 	return set(tuple(approver) for approver in approvers)
