@@ -114,11 +114,12 @@ class EarnedLeaveCalculator:
 		allocation.db_set("total_leaves_allocated", flt(new_allocation, 2), update_modified=False)
 		create_additional_leave_ledger_entry(allocation, allocation_difference, self.parent.today)
 
-		text = _("allocated {0} leave(s) via scheduler on {1}").format(
-			frappe.bold(self.earned_leaves), frappe.bold(formatdate(self.parent.today))
-		)
+		if allocation_difference > 0:
+			text = _("allocated {0} leave(s) via scheduler on {1}").format(
+				frappe.bold(self.earned_leaves), frappe.bold(formatdate(self.parent.today))
+			)
 
-		allocation.add_comment(comment_type="Info", text=text)
+			allocation.add_comment(comment_type="Info", text=text)
 
 	def conges_payes_ouvrables(self):
 		months = month_diff(self.period_end, self.period_start)
