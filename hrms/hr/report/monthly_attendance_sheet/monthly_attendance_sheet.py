@@ -574,7 +574,7 @@ def get_attendance_years() -> str:
 	else:
 		year_list = [getdate()]
 
-	return "\n".join(cstr(entry.year) for entry in year_list)
+	return "\n".join(cstr(entry) for entry in year_list)
 
 
 def get_chart_data(attendance_map: Dict, filters: Filters) -> Dict:
