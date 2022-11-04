@@ -404,7 +404,7 @@ def get_attendance_status_for_summarized_view(
 	return {
 		"total_present": summary.total_present + summary.total_half_days,
 		"total_leaves": summary.total_leaves + summary.total_half_days,
-		"total_absent": summary.total_absent + summary.total_half_days,
+		"total_absent": summary.total_absent,
 		"total_holidays": total_holidays,
 		"unmarked_days": total_unmarked_days,
 	}
@@ -572,9 +572,9 @@ def get_attendance_years() -> str:
 	if year_list:
 		year_list.sort(key=lambda d: d.year, reverse=True)
 	else:
-		year_list = [getdate().year]
+		year_list = [getdate()]
 
-	return "\n".join(cstr(entry.year) for entry in year_list)
+	return "\n".join(cstr(entry) for entry in year_list)
 
 
 def get_chart_data(attendance_map: Dict, filters: Filters) -> Dict:
