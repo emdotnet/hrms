@@ -1,6 +1,4 @@
-# Dodock
-
-
+# HR Management System
 
 ## :hammer_and_wrench: How the HR Management System directory works
 
