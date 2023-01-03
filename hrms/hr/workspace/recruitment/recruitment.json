@@ -10,12 +10,15 @@
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
+ "hidden": 0,
  "hide_custom": 0,
  "icon": "users",
  "idx": 0,
+ "is_standard": 1,
  "label": "Recruitment",
  "links": [
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Interviews",
@@ -24,6 +27,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Interview Type",
@@ -34,6 +38,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Interview Round",
@@ -44,6 +49,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Interview Type, Interview Round",
    "hidden": 0,
    "is_query_report": 0,
@@ -55,6 +61,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Interview",
    "hidden": 0,
    "is_query_report": 0,
@@ -66,6 +73,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Appointment",
@@ -74,6 +82,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Appointment Letter Template",
@@ -84,6 +93,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Job Applicant",
    "hidden": 0,
    "is_query_report": 0,
@@ -95,6 +105,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
@@ -103,6 +114,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 1,
    "label": "Recruitment Analytics",
@@ -113,6 +125,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Jobs",
@@ -121,6 +134,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Staffing Plan",
@@ -131,6 +145,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Job Opening",
@@ -141,6 +156,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Job Applicant",
@@ -151,6 +167,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Job Offer",
@@ -161,6 +178,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee Referral",
@@ -171,7 +189,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-09-16 12:00:50.412412",
+ "modified": "2023-01-03 16:56:33.061733",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Recruitment",
@@ -186,10 +204,11 @@
   }
  ],
  "roles": [],
- "sequence_id": 9.0,
+ "sequence_id": 10.0,
  "shortcuts": [
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Dashboard",
    "link_to": "Recruitment",
@@ -197,6 +216,7 @@
   },
   {
    "color": "Red",
+   "columns": 0,
    "doc_view": "List",
    "format": "{} Open",
    "label": "Job Applicant",
@@ -206,6 +226,7 @@
   },
   {
    "color": "Orange",
+   "columns": 0,
    "doc_view": "List",
    "format": "{} Open",
    "label": "Job Opening",
@@ -215,6 +236,7 @@
   },
   {
    "color": "Green",
+   "columns": 0,
    "doc_view": "List",
    "format": "{} Accepted",
    "label": "Job Offer",
