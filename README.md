@@ -57,9 +57,9 @@ The Dodock framework on which Dokos is installed also allows the installation of
 > `$ bench get-app hrms --branch v3.x.x`
 
 4. After that, you can install the hrms app on the required site by running
-    ```sh
-    $ bench --site sitename install-app hrms
-    ```
+	```sh
+	$ bench --site sitename install-app hrms
+	```
 
 ##### 2. Documentation to set up HRMS : [HRMS documentation](https://doc.dokos.io/fr/human-resources)
 
