@@ -61,6 +61,7 @@ unittests:
     - su -c "cd /home/dokotest/dokos-bench && bench add-to-hosts" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench start &> bench_start.log &" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench --site test_site reinstall --yes --mariadb-root-password test_dodock" dokotest
+    - su -c "cd /home/dokotest/dokos-bench && bench --site test_site install-app payments" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench --site test_site install-app hrms" dokotest
     - su -c "cd /home/dokotest/dokos-bench && bench build --app hrms" dokotest
 
