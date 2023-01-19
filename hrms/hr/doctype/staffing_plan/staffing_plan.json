@@ -12,6 +12,7 @@
   "from_date",
   "to_date",
   "staffing_plan_details",
+  "get_job_requisitions",
   "staffing_details",
   "section_break_8",
   "total_estimated_budget",
@@ -51,12 +52,12 @@
   {
    "fieldname": "staffing_plan_details",
    "fieldtype": "Section Break",
-   "label": "Staffing Plan Details"
+   "label": "Details"
   },
   {
    "fieldname": "staffing_details",
    "fieldtype": "Table",
-   "label": "Staffing Plan Detail",
+   "label": "Staffing Details",
    "options": "Staffing Plan Detail",
    "reqd": 1
   },
@@ -79,14 +80,20 @@
    "options": "Staffing Plan",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "get_job_requisitions",
+   "fieldtype": "Button",
+   "label": "Get Job Requisitions"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-03 15:51:02.863191",
+ "modified": "2023-01-11 18:06:32.989641",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Staffing Plan",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {
