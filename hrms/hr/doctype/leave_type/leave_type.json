@@ -21,7 +21,6 @@
   "allow_negative",
   "allow_over_allocation",
   "include_holiday",
-  "exclude_from_leave_acquisition",
   "is_compensatory",
   "carry_forward_section",
   "maximum_carry_forwarded_leaves",
@@ -36,7 +35,13 @@
   "earned_leave_frequency",
   "column_break_22",
   "allocate_on_day",
-  "rounding"
+  "rounding",
+  "periods_section",
+  "period_start_day",
+  "period_start_month",
+  "column_break_32",
+  "period_end_day",
+  "period_end_month"
  ],
  "fields": [
   {
@@ -116,7 +121,7 @@
    "collapsible": 1,
    "depends_on": "eval: doc.is_carry_forward == 1",
    "fieldname": "carry_forward_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Carry Forward"
   },
   {
@@ -128,7 +133,7 @@
   {
    "collapsible": 1,
    "fieldname": "encashment",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Encashment"
   },
   {
@@ -153,8 +158,8 @@
   {
    "collapsible": 1,
    "fieldname": "earned_leave",
-   "fieldtype": "Section Break",
-   "label": "Earned Leave"
+   "fieldtype": "Tab Break",
+   "label": "Earned Leave Calculation"
   },
   {
    "default": "0",
@@ -221,12 +226,50 @@
    "fieldtype": "Select",
    "label": "Allocate on Day",
    "options": "First Day\nLast Day\nDate of Joining"
+  },
+  {
+   "depends_on": "eval:[\"Cong\u00e9s pay\u00e9s sur jours ouvrables\", \"Cong\u00e9s pay\u00e9s sur jours ouvr\u00e9s\"].includes(doc.earned_leave_frequency)",
+   "fieldname": "periods_section",
+   "fieldtype": "Section Break",
+   "label": "Periods"
+  },
+  {
+   "default": "1",
+   "fieldname": "period_start_day",
+   "fieldtype": "Int",
+   "label": "Period Start Day",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "period_start_month",
+   "fieldtype": "Int",
+   "label": "Period Start Month",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_32",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "31",
+   "fieldname": "period_end_day",
+   "fieldtype": "Int",
+   "label": "Period End Day",
+   "non_negative": 1
+  },
+  {
+   "default": "12",
+   "fieldname": "period_end_month",
+   "fieldtype": "Int",
+   "label": "Period End Month",
+   "non_negative": 1
   }
  ],
  "icon": "fa fa-flag",
  "idx": 1,
  "links": [],
- "modified": "2023-01-31 10:19:49.181649",
+ "modified": "2023-02-13 17:04:47.652832",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Type",

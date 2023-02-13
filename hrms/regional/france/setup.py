@@ -66,6 +66,13 @@ def make_custom_fields(update=True):
 				description="Attendances for each employee will be calculated and don't need to be explicitely registered",
 				fieldtype="Check",
 				insert_after="auto_leave_encashment"
+			),
+			dict(
+				fieldname="allocate_leaves_from_contracts",
+				label="Allocate Leaves from Contracts",
+				description="Leave allocations will automatically attributed based on the rule defined in the employment contract",
+				fieldtype="Check",
+				insert_after="calculate_attendances"
 			)
 		],
 	}
@@ -83,6 +90,10 @@ def setup_default_leaves():
 			"include_holiday": 0,
 			"is_compensatory": 0,
 			"max_leaves_allowed": 0,
+			"period_start_day": 1,
+			"period_start_month": 1,
+			"period_end_day": 31,
+			"period_end_month": 12
 		},
 		{
 			"doctype": "Leave Type",
@@ -96,6 +107,10 @@ def setup_default_leaves():
 			"allow_negative": 1,
 			"is_earned_leave": 1,
 			"earned_leave_frequency": "Congés payés sur jours ouvrables",
+			"period_start_day": 1,
+			"period_start_month": 6,
+			"period_end_day": 31,
+			"period_end_month": 5
 		},
 		{
 			"doctype": "Leave Type",
@@ -106,7 +121,11 @@ def setup_default_leaves():
 			"include_holiday": 0,
 			"is_compensatory": 0,
 			"max_leaves_allowed": 0,
-			"allow_negative": 1
+			"allow_negative": 1,
+			"period_start_day": 1,
+			"period_start_month": 1,
+			"period_end_day": 31,
+			"period_end_month": 12
 		},
 	]
 
@@ -114,14 +133,6 @@ def setup_default_leaves():
 		doc = frappe.get_doc(leave_type)
 		doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
 
-	policy = {
-		"doctype": "Leave Policy",
-		"title": _("Congés Payés"),
-		"leave_policy_details": [{"leave_type": _("Congés Payés"), "annual_allocation": 30}],
-	}
-
-	doc = frappe.get_doc(policy)
-	doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
 
 def setup_document_permissions():
 	setup_custom_perms("Leave Encashment")

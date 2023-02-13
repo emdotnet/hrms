@@ -7,7 +7,7 @@ from typing import Optional
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, date_diff, flt, formatdate, getdate, nowdate, month_diff, get_last_day
+from frappe.utils import add_days, cint, date_diff, flt, formatdate, getdate, nowdate, month_diff, get_last_day, get_first_day
 
 from hrms.hr.utils import (
 	get_earned_leaves,
@@ -35,10 +35,25 @@ class EarnedLeaveAllocator:
 		self.today = getdate(date or nowdate())
 
 	def allocate(self):
-		for e_leave_type in self.e_leave_types:
-			leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
-			for allocation in leave_allocations:
-				EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
+		earned_leaves = [e.name for e in self.e_leave_types]
+		if frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts"):
+			for contract in frappe.get_all("Employment Contract", filters={"ifnull(relieving_date, '3999-12-31')": (">=", nowdate())}):
+				doc = frappe.get_doc("Employment Contract", contract.name)
+				for leave_type in doc.leave_types:
+					if leave_type.leave_type in earned_leaves:
+						e_leave_type = [el for el in self.e_leave_types if el.name == leave_type.leave_type][0]
+						leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
+						# TODO: Create a leave allocation if it doesn't exist
+						# if not leave_allocations:
+						# 	leave_allocations = create_leave_allocation()
+						for allocation in leave_allocations:
+							EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
+
+		else:
+			for e_leave_type in self.e_leave_types:
+				leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
+				for allocation in leave_allocations:
+					EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
 
 
 class EarnedLeaveCalculator:
@@ -46,8 +61,8 @@ class EarnedLeaveCalculator:
 		self.parent = parent
 		self.leave_type = leave_type
 		self.allocation = allocation
-		self.period_start = self.allocation.from_date
-		self.period_end = min(self.parent.today, self.allocation.to_date)
+		self.period_start = self.allocation.from_date or self.leave_type.get_period_start_date()
+		self.period_end = min(self.parent.today, self.allocation.to_date or self.leave_type.get_period_end_date())
 		self.annual_allocation = []
 		self.attendance = {}
 		self.earneable_leaves = 0
@@ -56,6 +71,15 @@ class EarnedLeaveCalculator:
 		self.divide_by_frequency = {"Yearly": 1, "Half-Yearly": 6, "Quarterly": 4, "Monthly": 12}
 
 	def calculate_allocation(self):
+		if self.leave_type.allocate_on_day == "First Day" and getdate() != get_first_day(getdate()):
+			return
+
+		if self.leave_type.allocate_on_day == "Last Day" and getdate().day != get_last_day(getdate()):
+			return
+
+		if self.leave_type.allocate_on_day == "Date of Joining" and getdate().day != get_last_day(getdate()):
+			return
+
 		if self.allocation.leave_policy_assignment and self.allocation.leave_policy:
 			leave_policy = (
 				self.allocation.leave_policy

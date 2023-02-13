@@ -14,11 +14,11 @@
   "column_break_3",
   "contract_type",
   "designation",
-  "employment_period_section",
+  "employment_period_tab",
   "date_of_joining",
   "column_break_8",
   "relieving_date",
-  "working_time_section",
+  "working_time_tab",
   "weekly_working_hours",
   "daily_working_tome_section",
   "monday",
@@ -28,7 +28,9 @@
   "column_break_16",
   "friday",
   "saturday",
-  "sunday"
+  "sunday",
+  "leaves_tab",
+  "leave_types"
  ],
  "fields": [
   {
@@ -68,19 +70,8 @@
    "reqd": 1
   },
   {
-   "fieldname": "employment_period_section",
-   "fieldtype": "Section Break",
-   "label": "Employment Period"
-  },
-  {
    "fieldname": "column_break_8",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "working_time_section",
-   "fieldtype": "Section Break",
-   "hide_border": 1,
-   "label": "Working Time"
   },
   {
    "fieldname": "weekly_working_hours",
@@ -159,11 +150,33 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company"
+  },
+  {
+   "fieldname": "employment_period_tab",
+   "fieldtype": "Tab Break",
+   "label": "Employment Period"
+  },
+  {
+   "fieldname": "working_time_tab",
+   "fieldtype": "Tab Break",
+   "hide_border": 1,
+   "label": "Working Time"
+  },
+  {
+   "fieldname": "leaves_tab",
+   "fieldtype": "Tab Break",
+   "label": "Leaves"
+  },
+  {
+   "fieldname": "leave_types",
+   "fieldtype": "Table MultiSelect",
+   "label": "Leave Types",
+   "options": "Employment Contract Leaves"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-09-19 21:04:03.745802",
+ "modified": "2023-02-13 16:28:22.184664",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Employment Contract",

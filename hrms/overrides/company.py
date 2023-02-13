@@ -43,7 +43,7 @@ def run_regional_setup(country):
 	try:
 		module_name = f"hrms.regional.{frappe.scrub(country)}.setup.setup"
 		frappe.get_attr(module_name)()
-	except ImportError:
+	except (ImportError, ModuleNotFoundError):
 		pass
 	except Exception:
 		frappe.log_error("Unable to setup country fixtures for HRMS")
