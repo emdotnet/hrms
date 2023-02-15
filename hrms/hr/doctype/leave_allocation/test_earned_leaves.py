@@ -276,7 +276,7 @@ class TestLeaveAllocation(FrappeTestCase):
 		leaves_allocated = get_allocated_leaves(leave_policy_assignments[0])
 		self.assertEqual(leaves_allocated, pro_rated_leave + 1)
 
-		def test_no_pro_rated_leaves_allocated_before_effective_date(self):
+	def test_no_pro_rated_leaves_allocated_before_effective_date(self):
 		start_date = get_first_day(add_months(getdate(), -1))
 		doj = add_days(start_date, 5)
 
