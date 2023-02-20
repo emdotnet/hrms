@@ -1,8 +1,6 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-import copy
-
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -18,7 +16,6 @@ from frappe.utils import (
 	get_link_to_form,
 	getdate,
 	nowdate,
-	today,
 )
 
 import erpnext
@@ -28,6 +25,9 @@ from erpnext.setup.doctype.employee.employee import (
 	get_holiday_list_for_employee,
 )
 
+from hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment import (
+	calculate_pro_rated_leaves,
+)
 
 class DuplicateDeclarationError(frappe.ValidationError):
 	pass
@@ -282,7 +282,7 @@ def generate_leave_encashment():
 
 		leave_allocation = frappe.get_all(
 			"Leave Allocation",
-			filters={"to_date": add_days(today(), -1), "leave_type": ("in", leave_type)},
+			filters={"to_date": add_days(getdate(), -1), "leave_type": ("in", leave_type)},
 			fields=[
 				"employee",
 				"leave_period",
@@ -299,14 +299,12 @@ def generate_leave_encashment():
 def allocate_earned_leaves():
 	"""Allocate earned leaves to Employees"""
 	e_leave_types = get_earned_leaves()
-	today = getdate()
+	today = frappe.flags.current_date or getdate()
 
 	for e_leave_type in e_leave_types:
-
 		leave_allocations = get_leave_allocations(today, e_leave_type.name)
 
 		for allocation in leave_allocations:
-
 			if not allocation.leave_policy_assignment and not allocation.leave_policy:
 				continue
 
@@ -323,6 +321,7 @@ def allocate_earned_leaves():
 				filters={"parent": leave_policy, "leave_type": e_leave_type.name},
 				fieldname=["annual_allocation"],
 			)
+			date_of_joining = frappe.db.get_value("Employee", allocation.employee, "date_of_joining")
 
 			from_date = allocation.from_date
 
@@ -332,12 +331,12 @@ def allocate_earned_leaves():
 			if check_effective_date(
 				from_date, today, e_leave_type.earned_leave_frequency, e_leave_type.allocate_on_day
 			):
-				update_previous_leave_allocation(allocation, annual_allocation, e_leave_type)
+				update_previous_leave_allocation(allocation, annual_allocation, e_leave_type, date_of_joining)
 
 
-def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type):
+def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type, date_of_joining):
 	earned_leaves = get_monthly_earned_leave(
-		annual_allocation, e_leave_type.earned_leave_frequency, e_leave_type.rounding
+		date_of_joining, annual_allocation, e_leave_type.earned_leave_frequency, e_leave_type.rounding
 	)
 
 	allocation = frappe.get_doc("Leave Allocation", allocation.name)
@@ -347,7 +346,7 @@ def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type
 		new_allocation = e_leave_type.max_leaves_allowed
 
 	if new_allocation != allocation.total_leaves_allocated:
-		today_date = today()
+		today_date = frappe.flags.current_date or getdate()
 
 		allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
 		create_additional_leave_ledger_entry(allocation, earned_leaves, today_date)
@@ -362,18 +361,42 @@ def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type
 		allocation.add_comment(comment_type="Info", text=text)
 
 
-def get_monthly_earned_leave(annual_leaves, frequency, rounding):
+def get_monthly_earned_leave(
+	date_of_joining,
+	annual_leaves,
+	frequency,
+	rounding,
+	period_start_date=None,
+	period_end_date=None,
+):
 	earned_leaves = 0.0
 	divide_by_frequency = {"Yearly": 1, "Half-Yearly": 2, "Quarterly": 4, "Monthly": 12}
 	if annual_leaves:
 		earned_leaves = flt(annual_leaves) / divide_by_frequency[frequency]
-		if rounding:
-			if rounding == "0.25":
-				earned_leaves = round(earned_leaves * 4) / 4
-			elif rounding == "0.5":
-				earned_leaves = round(earned_leaves * 2) / 2
-			else:
-				earned_leaves = round(earned_leaves)
+
+		if not (period_start_date or period_end_date):
+			today_date = frappe.flags.current_date or getdate()
+			period_end_date = get_last_day(today_date)
+			period_start_date = get_first_day(today_date)
+
+		earned_leaves = calculate_pro_rated_leaves(
+			earned_leaves, date_of_joining, period_start_date, period_end_date, is_earned_leave=True
+		)
+		earned_leaves = round_earned_leaves(earned_leaves, rounding)
+
+	return earned_leaves
+
+
+def round_earned_leaves(earned_leaves, rounding):
+	if not rounding:
+		return earned_leaves
+
+	if rounding == "0.25":
+		earned_leaves = round(earned_leaves * 4) / 4
+	elif rounding == "0.5":
+		earned_leaves = round(earned_leaves * 2) / 2
+	else:
+		earned_leaves = round(earned_leaves)
 
 	return earned_leaves
 

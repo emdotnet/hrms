@@ -2,7 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 import math
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import frappe
 from frappe import _, msgprint
@@ -15,6 +15,7 @@ from frappe.utils import (
 	flt,
 	formatdate,
 	get_first_day,
+	get_link_to_form,
 	getdate,
 	money_in_words,
 	rounded,
@@ -157,8 +158,7 @@ class SalarySlip(TransactionBase):
 		return status
 
 	def validate_dates(self, joining_date=None, relieving_date=None):
-		if date_diff(self.end_date, self.start_date) < 0:
-			frappe.throw(_("To date cannot be before From date"))
+		self.validate_from_to_dates("start_date", "end_date")
 
 		if not joining_date:
 			joining_date, relieving_date = frappe.get_cached_value(
@@ -640,11 +640,14 @@ class SalarySlip(TransactionBase):
 				# since row for statistical component is not added to salary slip
 				if struct_row.depends_on_payment_days:
 					joining_date, relieving_date = self.get_joining_and_relieving_dates()
-					default_data[struct_row.abbr] = amount
-					data[struct_row.abbr] = flt(
-						(flt(amount) * flt(self.payment_days) / cint(self.total_working_days)),
-						struct_row.precision("amount"),
+					payment_days_amount = (
+						flt(amount) * flt(self.payment_days) / cint(self.total_working_days)
+						if self.total_working_days
+						else 0
 					)
+
+					default_data[struct_row.abbr] = amount
+					data[struct_row.abbr] = flt(payment_days_amount, struct_row.precision("amount"))
 
 			elif amount or struct_row.amount_based_on_formula and amount is not None:
 				default_amount = self.eval_condition_and_formula(struct_row, default_data)
@@ -721,14 +724,23 @@ class SalarySlip(TransactionBase):
 			return amount
 
 		except NameError as err:
-			frappe.throw(
-				_("{0} <br> This error can be due to missing or deleted field.").format(err),
+			throw_error_message(
+				d,
+				err,
 				title=_("Name error"),
+				description=_("This error can be due to missing or deleted field."),
 			)
 		except SyntaxError as err:
-			frappe.throw(_("Syntax error in formula or condition: {0}").format(err))
-		except Exception as e:
-			frappe.throw(_("Error in formula or condition: {0}").format(e))
+			throw_error_message(
+				d, err, title=_("Syntax error"), description=_("This error can be due to invalid syntax.")
+			)
+		except Exception as err:
+			throw_error_message(
+				d,
+				err,
+				title=_("Error in formula or condition"),
+				description=_("This error can be due to invalid formula or condition."),
+			)
 			raise
 
 	def add_employee_benefits(self, payroll_period):
@@ -1768,7 +1780,7 @@ def eval_tax_slab_condition(condition, eval_globals=None, eval_locals=None):
 			"float": float,
 			"long": int,
 			"round": round,
-			"date": datetime.date,
+			"date": date,
 			"getdate": getdate,
 		}
 
@@ -1858,3 +1870,23 @@ def date_range(start=None, end=None):
 		days = [str(start + timedelta(days=i)) for i in range(delta.days + 1)]
 		return days
 	return []
+
+
+def throw_error_message(row, error, title, description=None):
+	data = frappe._dict(
+		{
+			"doctype": row.parenttype,
+			"name": row.parent,
+			"doclink": get_link_to_form(row.parenttype, row.parent),
+			"row_id": row.idx,
+			"error": error,
+			"title": title,
+			"description": description or "",
+		}
+	)
+
+	message = _(
+		"Error while evaluating the {doctype} {doclink} at row {row_id}. <br><br> <b>Error:</b> {error} <br><br> <b>Hint:</b> {description}"
+	).format(**data)
+
+	frappe.throw(message, title=title)
