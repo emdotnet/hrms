@@ -40,20 +40,57 @@ class EarnedLeaveAllocator:
 			for contract in frappe.get_all("Employment Contract", filters={"ifnull(relieving_date, '3999-12-31')": (">=", nowdate())}):
 				doc = frappe.get_doc("Employment Contract", contract.name)
 				for leave_type in doc.leave_types:
+					leave_allocations = self.get_employee_leave_allocations(self.today, leave_type.leave_type, doc.employee)
 					if leave_type.leave_type in earned_leaves:
-						e_leave_type = [el for el in self.e_leave_types if el.name == leave_type.leave_type][0]
-						leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
-						# TODO: Create a leave allocation if it doesn't exist
-						# if not leave_allocations:
-						# 	leave_allocations = create_leave_allocation()
+						if not leave_allocations:
+							leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type)
+
 						for allocation in leave_allocations:
-							EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
+							EarnedLeaveCalculator(self, frappe.get_doc("Leave Type", leave_type.leave_type), allocation).calculate_allocation()
+
+					elif not leave_allocations:
+						leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type)
 
 		else:
 			for e_leave_type in self.e_leave_types:
 				leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
 				for allocation in leave_allocations:
 					EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
+
+	def get_employee_leave_allocations(self, date, leave_type, employee):
+		return frappe.get_all(
+			"Leave Allocation",
+			filters={
+				"from_date": ("<=", date),
+				"to_date": (">=", date),
+				"employee": employee,
+				"docstatus": 1,
+				"leave_type": leave_type
+			},
+			fields=["name", "employee", "from_date", "to_date", "leave_policy_assignment",
+				"leave_policy", "company", "leave_type", "new_leaves_allocated",
+				"total_leaves_allocated"
+			]
+		)
+
+	def create_leave_allocation(self, contract, leave_type):
+		leave_type_doc = frappe.get_doc("Leave Type", leave_type)
+		allocation = frappe.get_doc(
+			dict(
+				doctype="Leave Allocation",
+				employee=contract.employee,
+				leave_type=leave_type_doc.name,
+				from_date=leave_type_doc.get_period_start_date(),
+				to_date=leave_type_doc.get_period_end_date(),
+				new_leaves_allocated=0 if leave_type_doc.is_earned_leave else leave_type_doc.max_leaves_allowed,
+				carry_forward=leave_type_doc.is_carry_forward,
+			)
+		)
+		allocation.save(ignore_permissions=True)
+		allocation.submit()
+
+		return [allocation]
+
 
 
 class EarnedLeaveCalculator:

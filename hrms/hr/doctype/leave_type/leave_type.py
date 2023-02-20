@@ -37,11 +37,14 @@ class LeaveType(Document):
 		self.validate_periods()
 
 	def validate_periods(self):
+		if frappe.flags.in_install or frappe.flags.in_migrate:
+			return
+
 		for field in ["period_start_month", "period_end_month"]:
 			if 12 > cint(self.get(field)) < 1:
 				frappe.throw(_("The month must be between 1 and 12"))
 
-		for combination in [{"period_start_day": self.period_start_month}, {"period_end_day": self.period_start_month}]:
+		for combination in [{"period_start_day": self.period_start_month}, {"period_end_day": self.period_end_month}]:
 			for start_date, start_month in combination.items():
 				start_month_range = monthrange(getdate().year, start_month)
 				if start_month == 2:
