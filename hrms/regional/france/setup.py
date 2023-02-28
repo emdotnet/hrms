@@ -57,7 +57,9 @@ def make_property_setters():
 		)
 
 def make_custom_fields(update=True):
-	# Keep for translations: _("")
+	# Keep for translations: _("Calculate attendances") _(""Allocate Leaves from Contracts"")
+	# _("Attendances for each employee will be calculated and don't need to be explicitely registered")
+	# _("Leave allocations will automatically attributed based on the rule defined in the employment contract")
 	custom_fields = {
 		"HR Settings": [
 			dict(
@@ -89,7 +91,7 @@ def setup_default_leaves():
 			"is_carry_forward": 0,
 			"include_holiday": 0,
 			"is_compensatory": 0,
-			"max_leaves_allowed": 0,
+			"max_leaves_allowed": 8,
 			"period_start_day": 1,
 			"period_start_month": 1,
 			"period_end_day": 31,
@@ -130,8 +132,14 @@ def setup_default_leaves():
 	]
 
 	for leave_type in leave_types:
-		doc = frappe.get_doc(leave_type)
-		doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
+		if frappe.db.exists("Leave Type", leave_type.get("leave_type_name")):
+			doc = frappe.get_doc("Leave Type", leave_type.get("leave_type_name"))
+			doc.update(leave_type)
+			doc.flags.ignore_permissions = True
+			doc.save()
+		else:
+			doc = frappe.get_doc(leave_type)
+			doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
 
 
 def setup_document_permissions():

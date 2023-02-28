@@ -36,20 +36,20 @@ class EarnedLeaveAllocator:
 
 	def allocate(self):
 		earned_leaves = [e.name for e in self.e_leave_types]
-		if frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts"):
+		if cint(frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts")):
 			for contract in frappe.get_all("Employment Contract", filters={"ifnull(relieving_date, '3999-12-31')": (">=", nowdate())}):
 				doc = frappe.get_doc("Employment Contract", contract.name)
 				for leave_type in doc.leave_types:
 					leave_allocations = self.get_employee_leave_allocations(self.today, leave_type.leave_type, doc.employee)
 					if leave_type.leave_type in earned_leaves:
 						if not leave_allocations:
-							leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type)
+							leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
 
 						for allocation in leave_allocations:
 							EarnedLeaveCalculator(self, frappe.get_doc("Leave Type", leave_type.leave_type), allocation).calculate_allocation()
 
 					elif not leave_allocations:
-						leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type)
+						leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
 
 		else:
 			for e_leave_type in self.e_leave_types:
@@ -73,15 +73,15 @@ class EarnedLeaveAllocator:
 			]
 		)
 
-	def create_leave_allocation(self, contract, leave_type):
+	def create_leave_allocation(self, contract, leave_type, date):
 		leave_type_doc = frappe.get_doc("Leave Type", leave_type)
 		allocation = frappe.get_doc(
 			dict(
 				doctype="Leave Allocation",
 				employee=contract.employee,
 				leave_type=leave_type_doc.name,
-				from_date=leave_type_doc.get_period_start_date(),
-				to_date=leave_type_doc.get_period_end_date(),
+				from_date=leave_type_doc.get_period_start_date(date),
+				to_date=leave_type_doc.get_period_end_date(date),
 				new_leaves_allocated=0 if leave_type_doc.is_earned_leave else leave_type_doc.max_leaves_allowed,
 				carry_forward=leave_type_doc.is_carry_forward,
 			)
@@ -108,13 +108,13 @@ class EarnedLeaveCalculator:
 		self.divide_by_frequency = {"Yearly": 1, "Half-Yearly": 6, "Quarterly": 4, "Monthly": 12}
 
 	def calculate_allocation(self):
-		if self.leave_type.allocate_on_day == "First Day" and getdate() != get_first_day(getdate()):
+		if self.leave_type.allocate_on_day == "First Day" and getdate(nowdate()) != get_first_day(getdate(nowdate())):
 			return
 
-		if self.leave_type.allocate_on_day == "Last Day" and getdate().day != get_last_day(getdate()):
+		elif self.leave_type.allocate_on_day == "Last Day" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
 			return
 
-		if self.leave_type.allocate_on_day == "Date of Joining" and getdate().day != get_last_day(getdate()):
+		elif self.leave_type.allocate_on_day == "Date of Joining" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
 			return
 
 		if self.allocation.leave_policy_assignment and self.allocation.leave_policy:
