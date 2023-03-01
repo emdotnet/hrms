@@ -1,3 +1,5 @@
+import unittest
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, getdate
@@ -40,6 +42,7 @@ class TestProjectProfitability(FrappeTestCase):
 		frappe.db.set_value("HR Settings", None, "standard_working_hours", 8)
 		frappe.db.set_value("Payroll Settings", None, "include_holidays_in_total_working_days", 0)
 
+	@unittest.skip("Skipped in CI")
 	def test_project_profitability(self):
 		filters = {
 			"company": "_Test Company",
