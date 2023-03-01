@@ -26,7 +26,8 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 
 		setup()
 
-		frappe.db.set_value("HR Settings", None, "calculate_attendances", 1)
+		frappe.db.set_single_value("HR Settings", "show_leaves_of_all_department_members_in_calendar", 1)
+		frappe.db.set_single_value("HR Settings", "calculate_attendances", 1)
 
 		leave_types = [
 			{
@@ -41,6 +42,10 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 				"allow_negative": 1,
 				"is_earned_leave": 1,
 				"earned_leave_frequency": "Congés payés sur jours ouvrables",
+				"period_start_day": 1,
+				"period_start_month": 6,
+				"period_end_day": 31,
+				"period_end_month": 5
 			},
 			{
 				"doctype": "Leave Type",
@@ -54,28 +59,15 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 				"allow_negative": 1,
 				"is_earned_leave": 1,
 				"earned_leave_frequency": "Congés payés sur jours ouvrés",
+				"period_start_day": 1,
+				"period_start_month": 6,
+				"period_end_day": 31,
+				"period_end_month": 5
 			},
 		]
 		for leave_type in leave_types:
-			doc = frappe.get_doc(leave_type)
-			doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
-
-		policies = [
-			{
-				"doctype": "Leave Policy",
-				"title": "Congés Payés sur jours ouvrés",
-				"leave_policy_details": [{"leave_type": "Congés Payés sur jours ouvrés", "annual_allocation": 25}],
-			},
-			{
-				"doctype": "Leave Policy",
-				"title": "Congés Payés sur jours ouvrables",
-				"leave_policy_details": [{"leave_type": "Congés Payés sur jours ouvrables", "annual_allocation": 30}],
-			}
-		]
-
-		for policy in policies:
-			doc = frappe.get_doc(policy)
-			doc.insert(ignore_if_duplicate=True)
+				doc = frappe.get_doc(leave_type)
+				doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
 
 		last_holiday_list = None
 		for year in [2018, 2019, 2020, 2021, 2022]:
@@ -95,7 +87,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		for contract_type in ["Temps plein", "Temps partiel"]:
 			frappe.get_doc({
 				"doctype": "Employment Contract Type",
-				"employment_contract_type": contract_type
+				"employment_contract_type": contract_type,
 			}).insert(ignore_if_duplicate=True)
 
 	@classmethod
@@ -113,7 +105,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		self.calculate_leaves("Congés Payés sur jours ouvrables", 2.5, 30)
 
 	def test_conges_payes_sur_jours_ouvres(self):
-		frappe.get_doc({
+		contract = frappe.get_doc({
 			"doctype": "Employment Contract",
 			"employee": self.employee,
 			"company": "_Test Company",
@@ -125,13 +117,17 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 			"wednesday": 7,
 			"thursday": 7,
 			"friday": 7
-		}).insert(ignore_if_duplicate=True)
+		})
+		contract.append("leave_types", {
+			"leave_type": "Congés Payés sur jours ouvrés"
+		})
+		contract.insert(ignore_if_duplicate=True)
 
 		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25)
 
 
 	def test_conges_payes_sur_jours_ouvrables_temps_partiel(self):
-		frappe.get_doc({
+		contract = frappe.get_doc({
 			"doctype": "Employment Contract",
 			"employee": self.employee,
 			"company": "_Test Company",
@@ -143,13 +139,17 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 			"wednesday": 0,
 			"thursday": 0,
 			"friday": 0
-		}).insert(ignore_if_duplicate=True)
+		})
+		contract.append("leave_types", {
+			"leave_type": "Congés Payés sur jours ouvrables"
+		})
+		contract.insert(ignore_if_duplicate=True)
 
 		self.calculate_leaves("Congés Payés sur jours ouvrables", 2.5, 30)
 
 
 	def test_conges_payes_sur_jours_ouvres_temps_partiel(self):
-		frappe.get_doc({
+		contract = frappe.get_doc({
 			"doctype": "Employment Contract",
 			"employee": self.employee,
 			"company": "_Test Company",
@@ -162,6 +162,10 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 			"thursday": 0,
 			"friday": 0
 		}).insert(ignore_if_duplicate=True)
+
+		contract.append("leave_types", {
+			"leave_type": "Congés Payés sur jours ouvrés"
+		})
 
 		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25)
 
@@ -173,23 +177,11 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 				frappe.db.set_value("Employee", self.employee, "holiday_list", f"_Test France Holiday List {getdate(period[0]).year}")
 				current_year = getdate(period[0]).year
 
-			leave_allocation = frappe.get_doc({
-				"doctype": "Leave Allocation",
-				"employee": self.employee,
-				"leave_type": leave_type,
-				"from_date": period[0],
-				"to_date": period[1],
-				"company": "_Test Company"
-			})
-			leave_allocation.insert()
-			leave_allocation.submit()
-
 			for date in daterange(getdate(period[0]), getdate(period[1])):
-				if date == getdate(period[0]):
-					self.assertEqual(leave_allocation.total_leaves_allocated, 0)
-
 				allocate_earned_leaves(date)
-				leave_allocation.reload()
+				leave_allocations = get_leave_allocations_for_employee(date, leave_type)
+				leave_allocation = frappe.get_doc("Leave Allocation", leave_allocations[0])
+				print(date, leave_allocation.total_leaves_allocated)
 				if date == get_last_day(date):
 					self.assertEqual(leave_allocation.total_leaves_allocated, flt(monthly * month_diff(date, getdate(period[0])), 2))
 
@@ -201,34 +193,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		approver = make_employee("testfranceleavesappro@example.com", company="_Test Company")
 		frappe.db.set_value("Employee", self.employee, "leave_approver", approver)
 
-		current_year = None
-		for period in PERIODS[1:2]:
-			if current_year != getdate(period[0]).year:
-				frappe.db.set_value("Employee", self.employee, "holiday_list", f"_Test France Holiday List {getdate(period[0]).year}")
-				current_year = getdate(period[0]).year
-
-			leave_allocation = frappe.get_doc({
-				"doctype": "Leave Allocation",
-				"employee": self.employee,
-				"leave_type": "Congés Payés sur jours ouvrables",
-				"from_date": period[0],
-				"to_date": period[1],
-				"company": "_Test Company"
-			})
-			leave_allocation.insert()
-			leave_allocation.submit()
-
-			for date in daterange(getdate(period[0]), getdate(period[1])):
-				if date == getdate(period[0]):
-					self.assertEqual(leave_allocation.total_leaves_allocated, 0)
-
-				allocate_earned_leaves(date)
-				leave_allocation.reload()
-				if date == get_last_day(date):
-					self.assertEqual(leave_allocation.total_leaves_allocated, flt(2.5 * month_diff(date, getdate(period[0])), 2))
-
-				if date == getdate(period[1]):
-					self.assertEqual(leave_allocation.total_leaves_allocated, 30)
+		self.calculate_leaves("Congés Payés sur jours ouvrables", 2.5, 30)
 
 		leaves = [
 			("2019-08-02", "2019-08-12"),
@@ -258,34 +223,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		approver = make_employee("testfranceleavesappro@example.com", company="_Test Company")
 		frappe.db.set_value("Employee", self.employee, "leave_approver", approver)
 
-		current_year = None
-		for period in PERIODS[1:2]:
-			if current_year != getdate(period[0]).year:
-				frappe.db.set_value("Employee", self.employee, "holiday_list", f"_Test France Holiday List {getdate(period[0]).year}")
-				current_year = getdate(period[0]).year
-
-			leave_allocation = frappe.get_doc({
-				"doctype": "Leave Allocation",
-				"employee": self.employee,
-				"leave_type": "Congés Payés sur jours ouvres",
-				"from_date": period[0],
-				"to_date": period[1],
-				"company": "_Test Company"
-			})
-			leave_allocation.insert()
-			leave_allocation.submit()
-
-			for date in daterange(getdate(period[0]), getdate(period[1])):
-				if date == getdate(period[0]):
-					self.assertEqual(leave_allocation.total_leaves_allocated, 0)
-
-				allocate_earned_leaves(date)
-				leave_allocation.reload()
-				if date == get_last_day(date):
-					self.assertEqual(leave_allocation.total_leaves_allocated, flt(2.08333333 * month_diff(date, getdate(period[0])), 2))
-
-				if date == getdate(period[1]):
-					self.assertEqual(leave_allocation.total_leaves_allocated, 25)
+		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25)
 
 		leaves = [
 			("2019-08-02", "2019-08-12"),
@@ -377,3 +315,18 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 
 			self.assertEqual(leave_allocation.unused_leaves, unused_leaves[current_year])
 
+def get_leave_allocations_for_employee(date, employee, leave_type):
+	return frappe.get_all(
+		"Leave Allocation",
+		filters={
+			"from_date": ("<=", date),
+			"to_date": (">=", date),
+			"employee": employee,
+			"docstatus": 1,
+			"leave_type": leave_type
+		},
+		fields=["name", "employee", "from_date", "to_date", "leave_policy_assignment",
+			"leave_policy", "company", "leave_type", "new_leaves_allocated",
+			"total_leaves_allocated"
+		]
+		)
