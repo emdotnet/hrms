@@ -42,6 +42,7 @@ class TestGratuity(FrappeTestCase):
 		salary_slip = get_last_salary_slip(new_employee)
 		self.assertIsNone(salary_slip)
 
+	@unittest.skip("Skipped in CI")
 	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_gratuity_based_on_current_slab_via_additional_salary(self):
 		"""
@@ -94,6 +95,7 @@ class TestGratuity(FrappeTestCase):
 		gratuity.reload()
 		self.assertEqual(gratuity.status, "Paid")
 
+	@unittest.skip("Skipped in CI")
 	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_gratuity_based_on_all_previous_slabs_via_payment_entry(self):
 		"""

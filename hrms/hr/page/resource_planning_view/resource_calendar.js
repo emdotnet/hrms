@@ -203,20 +203,22 @@ erpnext.resource_calendar.resourceCalendar = class ResourceCalendar {
 	}
 
 	get_resource(info, callback) {
-		frappe.xcall("hrms.hr.page.resource_planning_view.resource_planning_view.get_resources", {
-			company: this.company,
-			employee: this.employee,
-			department: this.department,
-			start: moment(info.start).format("YYYY-MM-DD"),
-			end: moment(info.end).format("YYYY-MM-DD"),
-			group_by: this.group,
-			group_by_value: this.group_by_value,
-			resources_view: this.resources_view,
-			with_tasks: this.task_enabled
-		}).then(r => {
-			callback(r)
-			this.get_resource_total(info)
-		})
+		if (this.company && info.start && info.end) {
+			frappe.xcall("hrms.hr.page.resource_planning_view.resource_planning_view.get_resources", {
+				company: this.company,
+				employee: this.employee,
+				department: this.department,
+				start: moment(info.start).format("YYYY-MM-DD"),
+				end: moment(info.end).format("YYYY-MM-DD"),
+				group_by: this.group,
+				group_by_value: this.group_by_value,
+				resources_view: this.resources_view,
+				with_tasks: this.task_enabled
+			}).then(r => {
+				callback(r)
+				this.get_resource_total(info)
+			})
+		}
 	}
 
 	get_events(info, callback) {

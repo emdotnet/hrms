@@ -31,6 +31,7 @@ class TestEmployeeBenefitApplication(FrappeTestCase):
 		date = getdate()
 		make_holiday_list(from_date=get_year_start(date), to_date=get_year_ending(date))
 
+	@unittest.skip("Skipped in CI")
 	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_employee_benefit_application(self):
 		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")

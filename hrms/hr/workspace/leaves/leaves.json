@@ -5,12 +5,15 @@
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
+ "hidden": 0,
  "hide_custom": 0,
  "icon": "non-profit",
  "idx": 0,
+ "is_standard": 1,
  "label": "Leaves",
  "links": [
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Setup",
@@ -19,6 +22,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Holiday List",
@@ -29,6 +33,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Type",
@@ -39,6 +44,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Period",
@@ -49,6 +55,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Policy",
@@ -59,6 +66,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Block List",
@@ -69,6 +77,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Allocation",
@@ -77,6 +86,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Allocation",
@@ -87,6 +97,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Policy Assignment",
@@ -97,6 +108,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Encashment",
@@ -107,6 +119,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Application",
@@ -115,6 +128,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave Application",
@@ -125,6 +139,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Compensatory Leave Request",
@@ -135,6 +150,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
@@ -143,6 +159,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 1,
    "label": "Employee Leave Balance",
@@ -153,6 +170,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 1,
    "label": "Employee Leave Balance Summary",
@@ -163,6 +181,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 1,
    "label": "Employees working on a holiday",
@@ -173,7 +192,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-09-16 11:36:11.119565",
+ "modified": "2023-01-03 16:56:40.604541",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leaves",
@@ -186,6 +205,7 @@
  "shortcuts": [
   {
    "color": "Orange",
+   "columns": 0,
    "doc_view": "List",
    "format": "{} Open",
    "label": "Leave Application",
@@ -195,6 +215,7 @@
   },
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Leave Allocation",
    "link_to": "Leave Allocation",

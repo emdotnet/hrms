@@ -86,13 +86,13 @@ jinja = {
 # ------------
 
 # before_install = "hrms.install.before_install"
-after_install = "hrms.setup.after_install"
-after_migrate = ["hrms.setup.update_select_perm_after_install"]
+after_install = "hrms.install.after_install"
+after_migrate = "hrms.setup.update_select_perm_after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "hrms.uninstall.before_uninstall"
+before_uninstall = "hrms.uninstall.before_uninstall"
 # after_uninstall = "hrms.uninstall.after_uninstall"
 
 # Desk Notifications
@@ -165,10 +165,7 @@ doc_events = {
 	},
 	"Loan": {"validate": "hrms.hr.utils.validate_loan_repay_from_salary"},
 	"Employee": {
-		"validate": [
-			"hrms.overrides.employee_master.validate_onboarding_process",
-			"hrms.overrides.employee_master.update_to_date_in_work_history",
-		],
+		"validate": "hrms.overrides.employee_master.validate_onboarding_process",
 		"on_update": "hrms.overrides.employee_master.update_approver_role",
 		"on_trash": "hrms.overrides.employee_master.update_employee_transfer",
 	},
@@ -190,6 +187,8 @@ scheduler_events = {
 	],
 	"hourly": [
 		"hrms.hr.doctype.daily_work_summary_group.daily_work_summary_group.trigger_emails",
+	],
+	"hourly_long": [
 		"hrms.hr.doctype.shift_type.shift_type.process_auto_attendance_for_all_shifts",
 	],
 	"daily": [

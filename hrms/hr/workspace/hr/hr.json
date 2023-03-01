@@ -19,6 +19,7 @@
  "label": "HR",
  "links": [
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Settings",
@@ -27,6 +28,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
@@ -38,6 +40,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
@@ -49,6 +52,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
@@ -105,6 +109,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Designation",
@@ -115,6 +120,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee",
@@ -123,6 +129,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee",
@@ -133,6 +140,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee Group",
@@ -154,6 +162,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Key Reports",
@@ -162,6 +171,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "dependencies": "Attendance",
    "hidden": 0,
    "is_query_report": 1,
@@ -173,6 +183,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Staffing Plan",
    "hidden": 0,
    "is_query_report": 1,
@@ -184,6 +195,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -195,6 +207,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -206,6 +219,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -217,6 +231,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee Advance",
    "hidden": 0,
    "is_query_report": 1,
@@ -228,6 +243,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee Exits",
@@ -238,6 +254,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "hidden": 0,
    "is_query_report": 0,
    "label": "Other Reports",
@@ -246,6 +263,7 @@
    "type": "Card Break"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -257,6 +275,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -268,6 +287,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Employee",
    "hidden": 0,
    "is_query_report": 1,
@@ -279,6 +299,7 @@
    "type": "Link"
   },
   {
+   "columns": 0,
    "dependencies": "Daily Work Summary",
    "hidden": 0,
    "is_query_report": 1,
@@ -290,7 +311,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-09-16 12:32:12.608987",
+ "modified": "2023-01-03 16:56:20.414672",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "HR",
@@ -300,9 +321,10 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 8.0,
+ "sequence_id": 7.0,
  "shortcuts": [
   {
+   "columns": 0,
    "format": "{} Open",
    "label": "HR Dashboard",
    "link_to": "Human Resource",
@@ -311,6 +333,7 @@
   },
   {
    "color": "Green",
+   "columns": 0,
    "format": "{} Active",
    "label": "Employee",
    "link_to": "Employee",
@@ -319,6 +342,7 @@
   },
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Expense Claims Dashboard",
    "link_to": "Expense Claims",
@@ -326,6 +350,7 @@
   },
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Recruitment Dashboard",
    "link_to": "Recruitment",
@@ -333,6 +358,7 @@
   },
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Employee Lifecycle Dashboard",
    "link_to": "Employee Lifecycle",
@@ -340,6 +366,7 @@
   },
   {
    "color": "Grey",
+   "columns": 0,
    "doc_view": "List",
    "label": "Attendance Dashboard",
    "link_to": "Attendance",
