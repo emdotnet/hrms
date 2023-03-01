@@ -8,7 +8,7 @@ def after_install():
 		print("Setting up HRMS...")
 		setup()
 
-		click.secho("Thank you for installing HRMS!", fg="green")
+		click.secho("Thank you for installing Dokos HR Management System!", fg="green")
 
 	except Exception as e:
 		BUG_REPORT_URL = "https://gitlab.com/dokos/hrms/-/issues"
