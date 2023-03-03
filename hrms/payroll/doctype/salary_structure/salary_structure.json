@@ -230,7 +230,7 @@
    "reqd": 1
   }
  ],
- "icon": "fa fa-file-text",
+ "icon": "uil uil-file-alt",
  "idx": 1,
  "is_submittable": 1,
  "links": [],
