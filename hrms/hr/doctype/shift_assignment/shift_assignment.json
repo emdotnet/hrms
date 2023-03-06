@@ -88,9 +88,7 @@
    "allow_on_submit": 1,
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "End Date",
-   "show_days": 1,
-   "show_seconds": 1
+   "label": "End Date"
   },
   {
    "allow_on_submit": 1,
@@ -98,14 +96,12 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Active\nInactive",
-   "show_days": 1,
-   "show_seconds": 1
+   "options": "Active\nInactive"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2020-06-15 14:27:54.310773",
+ "modified": "2023-02-24 16:58:06.014044",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Shift Assignment",
@@ -148,8 +144,10 @@
    "write": 1
   }
  ],
+ "show_preview_popup": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "employee_name",
  "track_changes": 1
 }

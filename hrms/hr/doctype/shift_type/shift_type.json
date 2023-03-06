@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "prompt",
  "creation": "2018-04-13 16:22:52.954783",
  "doctype": "DocType",
@@ -158,7 +159,8 @@
    "label": "Last Sync of Checkin"
   }
  ],
- "modified": "2019-07-30 01:05:24.660666",
+ "links": [],
+ "modified": "2023-02-24 16:58:06.541820",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Shift Type",
@@ -198,7 +200,9 @@
   }
  ],
  "quick_entry": 1,
+ "show_preview_popup": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
