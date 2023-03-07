@@ -237,7 +237,7 @@ class LeaveApplication(Document):
 		if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
 			holiday_dates = get_holiday_dates_for_employee(self.employee, self.from_date, self.to_date)
 
-		for dt in daterange(getdate(self.from_date), getdate(self.to_date)):
+		for dt in daterange(add_days(getdate(self.from_date), 1), add_days(getdate(self.to_date), -1)):
 			date = dt.strftime("%Y-%m-%d")
 			attendance_name = frappe.db.exists(
 				"Attendance", dict(employee=self.employee, attendance_date=date, docstatus=("!=", 2))
@@ -406,7 +406,7 @@ class LeaveApplication(Document):
 				name, leave_type, posting_date, from_date, to_date, total_leave_days, half_day_date
 			from `tabLeave Application`
 			where employee = %(employee)s and docstatus < 2 and status in ('Open', 'Approved')
-			and to_date >= %(from_date)s and from_date <= %(to_date)s
+			and to_date > %(from_date)s and from_date < %(to_date)s
 			and name != %(name)s""",
 			{
 				"employee": self.employee,

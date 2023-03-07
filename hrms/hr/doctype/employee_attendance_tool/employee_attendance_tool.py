@@ -69,7 +69,7 @@ def mark_employee_attendance(
 
 	for employee in employee_list:
 		lt = None
-		if status in ("On Leave", "Absent", "Half Day") and leave_type:
+		if status in ("On Leave", "Half Day") and leave_type:
 			lt = leave_type
 
 		attendance = frappe.get_doc(

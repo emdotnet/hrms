@@ -125,19 +125,12 @@
    "fieldtype": "Link",
    "label": "Shift",
    "options": "Shift Type"
-  },
-  {
-   "depends_on": "eval:[\"Absent\", \"Half Day\"].includes(doc.status)",
-   "fieldname": "leave_type",
-   "fieldtype": "Link",
-   "label": "Leave Type",
-   "options": "Leave Type"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-03-07 10:55:27.689020",
+ "modified": "2023-03-07 10:58:27.689020",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Employee Attendance Tool",
