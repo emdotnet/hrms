@@ -811,6 +811,24 @@ def get_leave_details(employee, date):
 			"remaining_leaves": flt(remaining_leaves, precision),
 		}
 
+
+	# For leaves allocated from contracts, a leave allocation may not be present the first month
+	if not leave_allocation and cint(frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts")):
+		leave_types = frappe.get_all(
+			"Employment Contract",
+			filters={"ifnull(relieving_date, '3999-12-31')": (">=", date), "employee": employee},
+			fields=["`tabEmployment Contract Leaves`.leave_type"],
+		)
+		for lt in leave_types:
+			if lt.leave_type and lt.leave_type not in leave_allocation:
+				leave_allocation[lt.leave_type] = {
+					"total_leaves": 0.0,
+					"expired_leaves": 0.0,
+					"leaves_taken": 0.0,
+					"leaves_pending_approval": 0.0,
+					"remaining_leaves": 0.0,
+				}
+
 	# is used in set query
 	lwp = frappe.get_list("Leave Type", filters={"is_lwp": 1}, pluck="name")
 

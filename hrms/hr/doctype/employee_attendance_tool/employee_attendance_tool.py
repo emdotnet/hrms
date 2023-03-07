@@ -68,17 +68,18 @@ def mark_employee_attendance(
 		employee_list = json.loads(employee_list)
 
 	for employee in employee_list:
-		leave_type = None
-		if status == "On Leave" and leave_type:
-			leave_type = leave_type
+		lt = None
+		if status in ("On Leave", "Absent", "Half Day") and leave_type:
+			lt = leave_type
 
 		attendance = frappe.get_doc(
 			dict(
+				company=company,
 				doctype="Attendance",
 				employee=employee,
 				attendance_date=getdate(date),
 				status=status,
-				leave_type=leave_type,
+				leave_type=lt,
 				late_entry=late_entry,
 				early_exit=early_exit,
 				shift=shift,

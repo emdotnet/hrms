@@ -210,6 +210,7 @@ frappe.ui.form.on("Employee Attendance Tool", {
 				late_entry: frm.doc.late_entry,
 				early_exit: frm.doc.early_exit,
 				shift: frm.doc.shift,
+				leave_type: frm.doc.leave_type
 			},
 			freeze: true,
 			freeze_message: __("Marking Attendance")
