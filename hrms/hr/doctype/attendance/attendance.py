@@ -33,7 +33,7 @@ ATTENDANCE_COLOR_STATUSES = {
 	"Present": "green",
 	"Work From Home": "green",
 	"Absent": "red",
-	"On Leave": "red",
+	"On Leave": "grey",
 	"Half Day": "orange",
 }
 

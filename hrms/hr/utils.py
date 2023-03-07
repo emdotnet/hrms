@@ -355,7 +355,7 @@ def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type
 			text = _(
 				"Allocated {0} leave(s) via scheduler on {1} based on the 'Allocate on Day' option set to {2}"
 			).format(
-				frappe.bold(earned_leaves), frappe.bold(formatdate(today_date)), e_leave_type.allocate_on_day
+				frappe.bold(earned_leaves), frappe.bold(formatdate(today_date)), _(e_leave_type.allocate_on_day)
 			)
 
 		allocation.add_comment(comment_type="Info", text=text)

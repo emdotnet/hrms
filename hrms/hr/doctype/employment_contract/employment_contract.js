@@ -2,6 +2,19 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Employment Contract', {
+	refresh(frm) {
+		frm.add_custom_button(__('Update leaves'), function () {
+			frappe.call({
+				method: 'update_leaves',
+				doc: frm.doc
+			}).then(r => {
+				frappe.show_alert({
+					message: __("Leave allocation in progress"),
+					indicator: "green"
+				})
+			})
+		});
+	},
 	weekly_working_hours(frm) {
 		if (!frm.from_daily_time) {
 			const divided_time = frm.doc.weekly_working_hours ? flt(frm.doc.weekly_working_hours) / 5 : 0

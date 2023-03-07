@@ -26,36 +26,48 @@ BDAY_MAP = {
 	"sunday": 6,
 }
 
-def allocate_earned_leaves(date=None):
-	EarnedLeaveAllocator(date).allocate()
+def allocate_earned_leaves(date=None, contract=None):
+	if contract:
+		EarnedLeaveAllocator(date, allocate_immediately=True).allocate_leaves_from_contract(contract)
+	else:
+		EarnedLeaveAllocator(date).allocate()
 
 class EarnedLeaveAllocator:
-	def __init__(self, date=None):
+	def __init__(self, date=None, allocate_immediately=False):
 		self.e_leave_types = get_earned_leaves()
 		self.today = getdate(date or nowdate())
+		self.allocate_immediately = allocate_immediately
+
 
 	def allocate(self):
-		earned_leaves = [e.name for e in self.e_leave_types]
 		if cint(frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts")):
 			for contract in frappe.get_all("Employment Contract", filters={"ifnull(relieving_date, '3999-12-31')": (">=", nowdate())}):
-				doc = frappe.get_doc("Employment Contract", contract.name)
-				for leave_type in doc.leave_types:
-					leave_allocations = self.get_employee_leave_allocations(self.today, leave_type.leave_type, doc.employee)
-					if leave_type.leave_type in earned_leaves:
-						if not leave_allocations:
-							leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
-
-						for allocation in leave_allocations:
-							EarnedLeaveCalculator(self, frappe.get_doc("Leave Type", leave_type.leave_type), allocation).calculate_allocation()
-
-					elif not leave_allocations:
-						leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
+				self.allocate_leaves_from_contract(contract.name)
 
 		else:
 			for e_leave_type in self.e_leave_types:
 				leave_allocations = get_leave_allocations(self.today, e_leave_type.name)
 				for allocation in leave_allocations:
 					EarnedLeaveCalculator(self, e_leave_type, allocation).calculate_allocation()
+
+
+	def allocate_leaves_from_contract(self, contract):
+		earned_leaves = [e.name for e in self.e_leave_types]
+		doc = frappe.get_doc("Employment Contract", contract)
+		for leave_type in doc.leave_types:
+			leave_allocations = self.get_employee_leave_allocations(self.today, leave_type.leave_type, doc.employee)
+			if leave_type.leave_type in earned_leaves:
+				if not leave_allocations:
+					leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
+
+				for allocation in leave_allocations:
+					EarnedLeaveCalculator(
+						self,
+						frappe.get_doc("Leave Type", leave_type.leave_type),
+						allocation,
+						allocate_immediately=self.allocate_immediately
+					).calculate_allocation()
+
 
 	def get_employee_leave_allocations(self, date, leave_type, employee):
 		return frappe.get_all(
@@ -94,7 +106,7 @@ class EarnedLeaveAllocator:
 
 
 class EarnedLeaveCalculator:
-	def __init__(self, parent, leave_type, allocation):
+	def __init__(self, parent, leave_type, allocation, allocate_immediately=False):
 		self.parent = parent
 		self.leave_type = leave_type
 		self.allocation = allocation
@@ -104,18 +116,20 @@ class EarnedLeaveCalculator:
 		self.attendance = {}
 		self.earneable_leaves = 0
 		self.earned_leaves = 0
+		self.allocate_immediately = allocate_immediately
 
 		self.divide_by_frequency = {"Yearly": 1, "Half-Yearly": 6, "Quarterly": 4, "Monthly": 12}
 
 	def calculate_allocation(self):
-		if self.leave_type.allocate_on_day == "First Day" and getdate(nowdate()) != get_first_day(getdate(nowdate())):
-			return
+		if not self.allocate_immediately:
+			if self.leave_type.allocate_on_day == "First Day" and getdate(nowdate()) != get_first_day(getdate(nowdate())):
+				return
 
-		elif self.leave_type.allocate_on_day == "Last Day" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
-			return
+			elif self.leave_type.allocate_on_day == "Last Day" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
+				return
 
-		elif self.leave_type.allocate_on_day == "Date of Joining" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
-			return
+			elif self.leave_type.allocate_on_day == "Date of Joining" and getdate(nowdate()) != get_last_day(getdate(nowdate())):
+				return
 
 		if self.allocation.leave_policy_assignment and self.allocation.leave_policy:
 			leave_policy = (
@@ -135,7 +149,7 @@ class EarnedLeaveCalculator:
 			self.annual_allocation = self.leave_type.max_leaves_allowed
 
 		if self.annual_allocation:
-			self.earneable_leaves = flt(self.annual_allocation) / 12
+			self.earneable_leaves = flt(flt(self.annual_allocation) / 12, 2)
 			self.get_attendance()
 
 			if self.leave_type.earned_leave_frequency == "Congés payés sur jours ouvrables":
@@ -184,6 +198,9 @@ class EarnedLeaveCalculator:
 
 	def conges_payes_ouvrables(self):
 		months = month_diff(self.period_end, self.period_start)
+		if months > 0:
+			months = months - 1
+
 		self.earned_leaves = min(
 			self.earneable_leaves * flt(
 				max(len(self.attendance.get("dates", [])) / 24, self.attendance.get("weeks", 0) / 4)
@@ -194,6 +211,9 @@ class EarnedLeaveCalculator:
 
 	def conges_payes_ouvres(self):
 		months = month_diff(self.period_end, self.period_start)
+		if months > 0:
+			months = months - 1
+
 		self.earned_leaves = min(
 			self.earneable_leaves * flt(
 				max(len(self.attendance.get("dates", [])) / 20, self.attendance.get("weeks", 0) / 4)
@@ -243,7 +263,7 @@ class EarnedLeaveCalculator:
 			filters={
 				"docstatus": 1,
 				"employee": self.allocation.employee,
-				"attendance_date": ("between", [self.period_start, self.period_end])
+				"attendance_date": ("between", [self.period_start, add_days(get_first_day(self.period_end), -1)])
 			},
 			fields=["name", "attendance_date", "status", "leave_type"],
 		)
@@ -274,7 +294,7 @@ class EarnedLeaveCalculator:
 	def calculate_attendance(self, attendance):
 		employee_doc = frappe.db.get_value("Employee", self.allocation.employee, ["date_of_joining", "relieving_date"], as_dict=True)
 		start_date = self.period_start
-		end_date = min(self.parent.today, self.allocation.to_date)
+		end_date = add_days(get_first_day(min(self.parent.today, self.allocation.to_date)), -1) # Calculate attendance only until end of previous month
 		if employee_doc.date_of_joining:
 			start_date = max(start_date, employee_doc.date_of_joining)
 		if employee_doc.relieving_date:
