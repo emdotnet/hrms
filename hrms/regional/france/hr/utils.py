@@ -68,6 +68,9 @@ class EarnedLeaveAllocator:
 						allocate_immediately=self.allocate_immediately
 					).calculate_allocation()
 
+			elif not leave_allocations:
+				leave_allocations = self.create_leave_allocation(doc, leave_type.leave_type, self.today)
+
 
 	def get_employee_leave_allocations(self, date, leave_type, employee):
 		return frappe.get_all(
@@ -197,9 +200,7 @@ class EarnedLeaveCalculator:
 			allocation.add_comment(comment_type="Info", text=text)
 
 	def conges_payes_ouvrables(self):
-		months = month_diff(self.period_end, self.period_start)
-		if months > 0:
-			months = months - 1
+		months = month_diff(self.period_end, self.period_start) - (1 if self.period_end != get_last_day(self.period_end) else 0)
 
 		self.earned_leaves = min(
 			self.earneable_leaves * flt(
@@ -210,9 +211,7 @@ class EarnedLeaveCalculator:
 		self.allocate_earned_leaves_based_on_formula()
 
 	def conges_payes_ouvres(self):
-		months = month_diff(self.period_end, self.period_start)
-		if months > 0:
-			months = months - 1
+		months = month_diff(self.period_end, self.period_start) - (1 if self.period_end != get_last_day(self.period_end) else 0)
 
 		self.earned_leaves = min(
 			self.earneable_leaves * flt(
@@ -294,7 +293,10 @@ class EarnedLeaveCalculator:
 	def calculate_attendance(self, attendance):
 		employee_doc = frappe.db.get_value("Employee", self.allocation.employee, ["date_of_joining", "relieving_date"], as_dict=True)
 		start_date = self.period_start
-		end_date = add_days(get_first_day(min(self.parent.today, self.allocation.to_date)), -1) # Calculate attendance only until end of previous month
+		calculation_end_date = min(self.parent.today, self.allocation.to_date)
+		# Calculate attendance only until end of previous month
+		end_date = add_days(get_first_day(calculation_end_date), -1) if calculation_end_date != get_last_day(calculation_end_date) else calculation_end_date
+
 		if employee_doc.date_of_joining:
 			start_date = max(start_date, employee_doc.date_of_joining)
 		if employee_doc.relieving_date:
@@ -333,7 +335,6 @@ class EarnedLeaveCalculator:
 
 
 		attendances = []
-
 		for date in daterange(start_date, end_date):
 			current_date = getdate(date)
 
