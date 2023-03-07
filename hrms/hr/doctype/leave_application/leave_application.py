@@ -23,6 +23,7 @@ from frappe.utils import (
 import erpnext
 from erpnext.buying.doctype.supplier_scorecard.supplier_scorecard import daterange
 from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+from erpnext import get_region
 from hrms.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
 from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import create_leave_ledger_entry
 from hrms.hr.utils import (
@@ -233,11 +234,18 @@ class LeaveApplication(Document):
 		if self.status != "Approved":
 			return
 
+		from_date = getdate(self.from_date)
+		to_date = getdate(self.to_date)
+
+		if get_region() == "France":
+			from_date = add_days(from_date, 1)
+			to_date = add_days(to_date, -1)
+
 		holiday_dates = []
 		if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
 			holiday_dates = get_holiday_dates_for_employee(self.employee, self.from_date, self.to_date)
 
-		for dt in daterange(add_days(getdate(self.from_date), 1), add_days(getdate(self.to_date), -1)):
+		for dt in daterange(from_date, to_date):
 			date = dt.strftime("%Y-%m-%d")
 			attendance_name = frappe.db.exists(
 				"Attendance", dict(employee=self.employee, attendance_date=date, docstatus=("!=", 2))

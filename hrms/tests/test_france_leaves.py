@@ -141,7 +141,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		})
 		contract.insert(ignore_if_duplicate=True)
 
-		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25)
+		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08, 25)
 
 
 	def test_conges_payes_sur_jours_ouvrables_temps_partiel(self):
@@ -185,7 +185,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 			"leave_type": "Congés Payés sur jours ouvrés"
 		})
 
-		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25)
+		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08, 25)
 
 
 	def calculate_leaves(self, leave_type, monthly, yearly, periods=None):
@@ -203,10 +203,10 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 					continue
 				leave_allocation = frappe.get_doc("Leave Allocation", leave_allocations[0])
 				if date == get_last_day(date):
-					self.assertEqual(flt(leave_allocation.total_leaves_allocated - leave_allocation.unused_leaves, 2), flt(monthly * month_diff(date, getdate(period[0])), 2))
-
-				if date == getdate(period[1]):
-					self.assertEqual(flt(leave_allocation.total_leaves_allocated  - leave_allocation.unused_leaves, 2), yearly)
+					if date == getdate(period[1]):
+						self.assertEqual(flt(leave_allocation.total_leaves_allocated - leave_allocation.unused_leaves, 2), yearly)
+					else:
+						self.assertEqual(flt(leave_allocation.total_leaves_allocated - leave_allocation.unused_leaves, 2), flt(monthly * month_diff(date, getdate(period[0])), 2))
 
 
 	def test_leave_application_jours_ouvrables(self):
@@ -280,7 +280,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 		contract.insert(ignore_if_duplicate=True)
 
 
-		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08333333, 25, PERIODS[1:2])
+		self.calculate_leaves("Congés Payés sur jours ouvrés", 2.08, 25, PERIODS[1:2])
 
 		leaves = [
 			("2019-08-02", "2019-08-12"),
