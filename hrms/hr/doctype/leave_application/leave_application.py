@@ -357,7 +357,7 @@ class LeaveApplication(Document):
 			if self.total_leave_days <= 0:
 				frappe.throw(
 					_(
-						"The day(s) on which you are applying for leave are holidays. You need not apply for leave."
+						"The day(s) on which you are applying for leave are holidays or the total leave days is equal to 0. You don't need to apply for leave."
 					)
 				)
 
@@ -747,7 +747,7 @@ def get_number_of_leave_days(
 ) -> float:
 	"""Returns number of leave days between 2 dates after considering half day and holidays
 	(Based on the include_holiday setting in Leave Type)"""
-	number_of_days = get_regional_number_of_leave_days(
+	number_of_days, has_been_calculated = get_regional_number_of_leave_days(
 		employee,
 		leave_type,
 		from_date,
@@ -757,7 +757,7 @@ def get_number_of_leave_days(
 		holiday_list,
 	)
 
-	if number_of_days:
+	if has_been_calculated:
 		return number_of_days
 
 	if cint(half_day) == 1:
@@ -788,7 +788,7 @@ def get_regional_number_of_leave_days(
 	half_day_date: Optional[str] = None,
 	holiday_list: Optional[str] = None,
 ) -> float:
-	return 0
+	return 0, False
 
 
 @frappe.whitelist()

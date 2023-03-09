@@ -400,9 +400,9 @@ def get_regional_number_of_leave_days(
 	else:
 		number_of_days = date_diff(to_date, next_expected_working_day)
 	if not leave_type.include_holiday:
-		number_of_days = flt(number_of_days) - flt(len([h for h in  holidays if getdate(h) > next_expected_working_day]))
+		number_of_days = max(flt(number_of_days) - flt(len([h for h in  holidays if getdate(h) > next_expected_working_day])), 0)
 
-	return number_of_days
+	return number_of_days, True
 
 def daterange(start_date, end_date):
 	for n in range(int((end_date - start_date).days) + 1):
