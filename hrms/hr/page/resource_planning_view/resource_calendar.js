@@ -344,7 +344,7 @@ erpnext.resource_calendar.resourceCalendar = class ResourceCalendar {
 
 		this.calendar.setOption("resourceGroupField", this.group ? this.group.toLowerCase() : null);
 
-		this.page.standard_actions.empty();
+		this.page.custom_actions.empty();
 		this.add_view_selector();
 		this.add_filters_and_dropdowns()
 		this.refetch_all();
