@@ -2,9 +2,9 @@
 // MIT License. See license.txt
 
 import { Calendar } from '@fullcalendar/core';
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import adaptivePlugin from '@fullcalendar/adaptive';
+import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 
 frappe.provide("erpnext.resource_calendar")
 
