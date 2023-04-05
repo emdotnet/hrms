@@ -1000,6 +1000,9 @@ def get_remaining_leaves(
 
 	# balance for carry forwarded leaves
 	if cf_expiry and allocation.unused_leaves:
+		# allocation contains both carry forwarded and new leaves
+		new_leaves_taken, cf_leaves_taken = get_new_and_cf_leaves_taken(allocation, cf_expiry)
+
 		if getdate(date) > getdate(cf_expiry):
 			# carry forwarded leaves have expired
 			cf_leaves = remaining_cf_leaves = 0
