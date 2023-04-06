@@ -1322,6 +1322,7 @@ def make_salary_component(salary_components, test_tax, company_list=None):
 		doc = frappe.new_doc("Salary Component")
 		doc.update(salary_component)
 		doc.insert()
+		doc.reload()
 
 		set_salary_component_account(doc, company_list)
 
