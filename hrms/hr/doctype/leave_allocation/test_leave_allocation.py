@@ -166,6 +166,7 @@ class TestLeaveAllocation(FrappeTestCase):
 
 	def test_validation_for_over_allocation_based_on_leave_setup_post_submission(self):
 		frappe.delete_doc_if_exists("Leave Period", "Test Allocation Period")
+		frappe.delete_doc_if_exists("Leave Type", "_Test Allocation Validation", force=True)
 
 		leave_type = create_leave_type(
 			leave_type_name="_Test Allocation Validation", is_carry_forward=1, max_leaves_allowed=30
