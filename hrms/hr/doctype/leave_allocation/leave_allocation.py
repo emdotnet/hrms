@@ -122,6 +122,8 @@ class LeaveAllocation(Document):
 				"employee": self.employee,
 				"company": self.company,
 				"leave_type": self.leave_type,
+				"is_carry_forward": 0,
+				"docstatus": 1,
 			},
 			fields=["SUM(leaves) as total_leaves"],
 		)

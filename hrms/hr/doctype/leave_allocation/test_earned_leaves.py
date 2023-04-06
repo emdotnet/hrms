@@ -175,7 +175,6 @@ class TestLeaveAllocation(FrappeTestCase):
 		self.assertEqual(leaves_allocated, 3)
 
 	def test_earned_leaves_creation(self):
-		test = get_year_start(getdate())
 		frappe.flags.current_date = get_year_start(getdate())
 		make_policy_assignment(
 			self.employee,
@@ -245,6 +244,9 @@ class TestLeaveAllocation(FrappeTestCase):
 	def test_overallocation_with_carry_forwarding(self):
 		"""Tests earned leave allocation with cf leaves does not exceed annual allocation"""
 		year_start = get_year_start(getdate())
+
+		if not frappe.db.exists("Leave Type", self.leave_type):
+			create_earned_leave_type("Test Earned Leave", "Last Day")
 
 		# initial leave allocation = 5
 		leave_allocation = create_leave_allocation(
