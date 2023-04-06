@@ -127,6 +127,11 @@ class TestLeaveAllocation(FrappeTestCase):
 
 	def test_validation_for_over_allocation_based_on_leave_setup(self):
 		frappe.delete_doc_if_exists("Leave Period", "Test Allocation Period")
+
+		leave_type = create_leave_type(
+			leave_type_name="_Test Allocation Validation", is_carry_forward=1, max_leaves_allowed=25
+		)
+
 		leave_period = frappe.get_doc(
 			dict(
 				name="Test Allocation Period",
@@ -135,12 +140,9 @@ class TestLeaveAllocation(FrappeTestCase):
 				to_date=add_months(nowdate(), 6),
 				company="_Test Company",
 				is_active=1,
+				leave_types=[{"leave_type": leave_type}]
 			)
 		).insert()
-
-		leave_type = create_leave_type(
-			leave_type_name="_Test Allocation Validation", is_carry_forward=1, max_leaves_allowed=25
-		)
 
 		# 15 leaves allocated in this period
 		allocation = create_leave_allocation(
@@ -164,6 +166,11 @@ class TestLeaveAllocation(FrappeTestCase):
 
 	def test_validation_for_over_allocation_based_on_leave_setup_post_submission(self):
 		frappe.delete_doc_if_exists("Leave Period", "Test Allocation Period")
+
+		leave_type = create_leave_type(
+			leave_type_name="_Test Allocation Validation", is_carry_forward=1, max_leaves_allowed=30
+		)
+
 		leave_period = frappe.get_doc(
 			dict(
 				name="Test Allocation Period",
@@ -172,12 +179,9 @@ class TestLeaveAllocation(FrappeTestCase):
 				to_date=add_months(nowdate(), 6),
 				company="_Test Company",
 				is_active=1,
+				leave_types=[{"leave_type": leave_type}]
 			)
 		).insert()
-
-		leave_type = create_leave_type(
-			leave_type_name="_Test Allocation Validation", is_carry_forward=1, max_leaves_allowed=30
-		)
 
 		# 15 leaves allocated
 		allocation = create_leave_allocation(
