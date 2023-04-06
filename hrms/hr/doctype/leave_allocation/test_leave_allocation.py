@@ -239,7 +239,7 @@ class TestLeaveAllocation(FrappeTestCase):
 		self.assertRaises(BackDatedAllocationError, leave_allocation.save)
 
 	def test_carry_forward_calculation(self):
-		leave_type = create_leave_type(
+		create_leave_type(
 			leave_type_name="_Test_CF_leave",
 			is_carry_forward=1,
 			maximum_carry_forwarded_leaves=10,

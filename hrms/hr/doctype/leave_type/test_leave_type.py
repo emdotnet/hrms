@@ -23,6 +23,8 @@ def create_leave_type(**args):
 			"expire_carry_forwarded_leaves_after_days": args.expire_carry_forwarded_leaves_after_days or 0,
 			"encashment_threshold_days": args.encashment_threshold_days or 5,
 			"earning_component": "Leave Encashment",
+			"max_leaves_allowed": args.max_leaves_allowed,
+			"maximum_carry_forwarded_leaves": args.maximum_carry_forwarded_leaves,
 		}
 	)
 
