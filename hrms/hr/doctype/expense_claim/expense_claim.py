@@ -447,7 +447,7 @@ def get_expense_claim_account(expense_claim_type, company):
 	if not account:
 		frappe.throw(
 			_("Set the default account for the {0} {1}").format(
-				frappe.bold("Expense Claim Type"), get_link_to_form("Expense Claim Type", expense_claim_type)
+				frappe.bold(_("Expense Claim Type")), get_link_to_form("Expense Claim Type", expense_claim_type)
 			)
 		)
 

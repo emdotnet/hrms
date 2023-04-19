@@ -629,7 +629,7 @@ def share_doc_with_approver(doc, user):
 		)
 
 		frappe.msgprint(
-			_("Shared with the user {0} with {1} access").format(user, frappe.bold("submit"), alert=True)
+			_("Shared with the user {0} with {1} access").format(user, frappe.bold(_("submit")), alert=True)
 		)
 
 	# remove shared doc if approver changes
