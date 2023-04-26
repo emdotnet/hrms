@@ -233,7 +233,6 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval:(!doc.salary_slip_based_on_timesheet)",
    "fieldname": "payroll_frequency",
    "fieldtype": "Select",
    "label": "Payroll Frequency",
@@ -700,7 +699,7 @@
  "idx": 9,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-20 20:04:00.131248",
+ "modified": "2023-04-26 17:29:49.079158",
  "modified_by": "Administrator",
  "module": "Payroll",
  "name": "Salary Slip",
