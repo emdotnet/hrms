@@ -204,7 +204,6 @@ class ShiftType(Document):
 		assigned_employees = frappe.get_all("Shift Assignment", filters=filters, pluck="employee")
 
 		if consider_default_shift:
-			filters = {"default_shift": self.name, "status": ["!=", "Inactive"]}
 			default_shift_employees = self.get_employees_with_default_shift(filters)
 
 			return list(set(assigned_employees + default_shift_employees))
