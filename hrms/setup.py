@@ -226,11 +226,19 @@ def get_custom_fields():
 			},
 		],
 		"Designation": [
+		{
+				"fieldname": "appraisal_template",
+				"fieldtype": "Link",
+				"label": "Appraisal Template",
+				"options": "Appraisal Template",
+				"insert_after": "description",
+				"allow_in_quick_entry": 1,
+			},
 			{
 				"fieldname": "required_skills_section",
 				"fieldtype": "Section Break",
 				"label": "Required Skills",
-				"insert_after": "description",
+				"insert_after": "appraisal_template",
 			},
 			{
 				"fieldname": "skills",
@@ -614,9 +622,7 @@ def get_post_install_patches():
 		"erpnext.patches.v10_0.migrate_daily_work_summary_settings_to_daily_work_summary_group",
 		"erpnext.patches.v11_0.move_leave_approvers_from_employee",
 		"erpnext.patches.v11_0.rename_field_max_days_allowed",
-		"erpnext.patches.v11_0.set_department_for_doctypes",
 		"erpnext.patches.v11_0.add_expense_claim_default_account",
-		"erpnext.patches.v11_0.drop_column_max_days_allowed",
 		"erpnext.patches.v11_0.rename_additional_salary_component_additional_salary",
 		"erpnext.patches.v11_1.set_salary_details_submittable",
 		"erpnext.patches.v11_1.rename_depends_on_lwp",
@@ -642,6 +648,8 @@ def get_post_install_patches():
 		"erpnext.patches.v13_0.set_payroll_entry_status",
 		# HRMS
 		"create_country_fixtures",
+		"update_allocate_on_in_leave_type",
+		"update_performance_module_changes",
 	)
 
 
@@ -654,10 +662,11 @@ def run_post_install_patches():
 
 	try:
 		for patch in POST_INSTALL_PATCHES:
-			# patch has not run on the site before
-			if not frappe.db.exists("Patch Log", {"patch": ("like", f"%{patch}%")}):
-				patch_name = patch.split(".")[-1]
-				frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
+			patch_name = patch.split(".")[-1]
+			if not patch_name:
+				continue
+
+			frappe.get_attr(f"hrms.patches.post_install.{patch_name}.execute")()
 	finally:
 		frappe.flags.in_patch = False
 

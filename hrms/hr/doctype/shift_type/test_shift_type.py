@@ -50,6 +50,33 @@ class TestShiftType(FrappeTestCase):
 		)
 		self.assertEqual(attendance.status, "Present")
 
+	def test_mark_attendance_with_different_shift_start_time(self):
+		"""Tests whether attendance is marked correctly if shift configuration is changed midway"""
+		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
+
+		employee = make_employee("test_employee_checkin@example.com", company="_Test Company")
+
+		shift_type = setup_shift_type(shift_type="Test Shift Start")
+		date = getdate()
+		make_shift_assignment(shift_type.name, employee, date)
+
+		timestamp = datetime.combine(date, get_time("08:00:00"))
+		log_in = make_checkin(employee, timestamp)
+
+		# change config before adding OUT log
+		shift_type.begin_check_in_before_shift_start_time = 120
+		shift_type.save()
+
+		timestamp = datetime.combine(date, get_time("12:00:00"))
+		log_out = make_checkin(employee, timestamp)
+
+		shift_type.process_auto_attendance()
+
+		attendance = frappe.db.get_value(
+			"Attendance", {"shift": shift_type.name}, ["status", "name"], as_dict=True
+		)
+		self.assertEqual(attendance.status, "Present")
+
 	def test_entry_and_exit_grace(self):
 		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
 
@@ -141,37 +168,8 @@ class TestShiftType(FrappeTestCase):
 		employee = make_employee("test_employee_checkin@example.com", company="_Test Company")
 		shift_type = setup_shift_type(
 			shift_type="Half Day + Absent Test",
-			working_hours_threshold_for_half_day=1,
-			working_hours_threshold_for_absent=2,
-		)
-		date = getdate()
-		make_shift_assignment(shift_type.name, employee, date)
-
-		timestamp = datetime.combine(date, get_time("08:00:00"))
-		log_in = make_checkin(employee, timestamp)
-		self.assertEqual(log_in.shift, shift_type.name)
-
-		timestamp = datetime.combine(date, get_time("08:45:00"))
-		log_out = make_checkin(employee, timestamp)
-		self.assertEqual(log_out.shift, shift_type.name)
-
-		shift_type.process_auto_attendance()
-
-		attendance = frappe.db.get_value(
-			"Attendance", {"shift": shift_type.name}, ["status", "working_hours"], as_dict=True
-		)
-		self.assertEqual(attendance.status, "Half Day")
-		self.assertEqual(attendance.working_hours, 0.75)
-
-	def test_working_hours_threshold_for_absent_and_half_day_2(self):
-		# considers absent over half day
-		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
-
-		employee = make_employee("test_employee_checkin@example.com", company="_Test Company")
-		shift_type = setup_shift_type(
-			shift_type="Half Day + Absent Test",
-			working_hours_threshold_for_half_day=1,
-			working_hours_threshold_for_absent=2,
+			working_hours_threshold_for_half_day=2,
+			working_hours_threshold_for_absent=1,
 		)
 		date = getdate()
 		make_shift_assignment(shift_type.name, employee, date)
@@ -186,8 +184,115 @@ class TestShiftType(FrappeTestCase):
 
 		shift_type.process_auto_attendance()
 
+		attendance = frappe.db.get_value(
+			"Attendance", {"shift": shift_type.name}, ["status", "working_hours"], as_dict=True
+		)
+		self.assertEqual(attendance.status, "Half Day")
+		self.assertEqual(attendance.working_hours, 1.5)
+
+	def test_working_hours_threshold_for_absent_and_half_day_2(self):
+		# considers absent over half day
+		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
+
+		employee = make_employee("test_employee_checkin@example.com", company="_Test Company")
+		shift_type = setup_shift_type(
+			shift_type="Half Day + Absent Test",
+			working_hours_threshold_for_half_day=2,
+			working_hours_threshold_for_absent=1,
+		)
+		date = getdate()
+		make_shift_assignment(shift_type.name, employee, date)
+
+		timestamp = datetime.combine(date, get_time("08:00:00"))
+		log_in = make_checkin(employee, timestamp)
+		self.assertEqual(log_in.shift, shift_type.name)
+
+		timestamp = datetime.combine(date, get_time("08:45:00"))
+		log_out = make_checkin(employee, timestamp)
+		self.assertEqual(log_out.shift, shift_type.name)
+
+		shift_type.process_auto_attendance()
+
 		attendance = frappe.db.get_value("Attendance", {"shift": shift_type.name}, "status")
 		self.assertEqual(attendance, "Absent")
+
+	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
+	def test_mark_auto_attendance_on_holiday_enabled(self):
+		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
+
+		# add current date as holiday
+		date = getdate()
+		holiday_list = frappe.get_doc("Holiday List", self.holiday_list)
+		holiday_list.append(
+			"holidays",
+			{
+				"holiday_date": date,
+				"description": "test",
+			},
+		)
+		holiday_list.save()
+
+		shift_type = setup_shift_type(
+			shift_type="Test Holiday Shift", mark_auto_attendance_on_holidays=True
+		)
+		shift_type.holiday_list = None
+		shift_type.save()
+
+		employee = make_employee(
+			"test_shift_with_holiday@example.com", default_shift=shift_type.name, company="_Test Company"
+		)
+
+		# make logs
+		timestamp = datetime.combine(date, get_time("08:00:00"))
+		log = make_checkin(employee, timestamp)
+		timestamp = datetime.combine(date, get_time("12:00:00"))
+		log = make_checkin(employee, timestamp)
+
+		shift_type.process_auto_attendance()
+
+		attendance = frappe.db.get_value(
+			"Attendance", {"employee": employee, "attendance_date": date}, "status"
+		)
+		self.assertEqual(attendance, "Present")
+
+	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
+	def test_mark_auto_attendance_on_holiday_disabled(self):
+		from hrms.hr.doctype.employee_checkin.test_employee_checkin import make_checkin
+
+		# add current date as holiday
+		date = getdate()
+		holiday_list = frappe.get_doc("Holiday List", self.holiday_list)
+		holiday_list.append(
+			"holidays",
+			{
+				"holiday_date": date,
+				"description": "test",
+			},
+		)
+		holiday_list.save()
+
+		shift_type = setup_shift_type(
+			shift_type="Test Holiday Shift", mark_auto_attendance_on_holidays=False
+		)
+		shift_type.holiday_list = None
+		shift_type.save()
+
+		employee = make_employee(
+			"test_shift_with_holiday@example.com", default_shift=shift_type.name, company="_Test Company"
+		)
+
+		# make logs
+		timestamp = datetime.combine(date, get_time("08:00:00"))
+		log = make_checkin(employee, timestamp)
+		timestamp = datetime.combine(date, get_time("12:00:00"))
+		log = make_checkin(employee, timestamp)
+
+		shift_type.process_auto_attendance()
+
+		attendance = frappe.db.get_value(
+			"Attendance", {"employee": employee, "attendance_date": date}, "status"
+		)
+		self.assertIsNone(attendance)
 
 	def test_mark_absent_for_dates_with_no_attendance(self):
 		employee = make_employee("test_employee_checkin@example.com", company="_Test Company")
@@ -236,7 +341,7 @@ class TestShiftType(FrappeTestCase):
 
 		default_shift = setup_shift_type()
 		employee = make_employee(
-			"test_employee_checkin@example.com", company="_Test Company", shift_type=default_shift.name
+			"test_employee_checkin@example.com", company="_Test Company", default_shift=default_shift.name
 		)
 
 		assigned_shift = setup_shift_type(shift_type="Test Absent with no Attendance")
@@ -250,11 +355,15 @@ class TestShiftType(FrappeTestCase):
 		log_out = make_checkin(employee, timestamp)
 
 		default_shift.process_auto_attendance()
-		attendance = frappe.db.get_value("Attendance", {"employee": employee}, "status")
+		attendance = frappe.db.get_value(
+			"Attendance", {"employee": employee, "shift": default_shift.name}, "status"
+		)
 		self.assertIsNone(attendance)
 
 		assigned_shift.process_auto_attendance()
-		attendance = frappe.db.get_value("Attendance", {"employee": employee}, "status")
+		attendance = frappe.db.get_value(
+			"Attendance", {"employee": employee, "shift": assigned_shift.name}, "status"
+		)
 		self.assertEqual(attendance, "Present")
 
 	def test_get_start_and_end_dates(self):
@@ -376,6 +485,7 @@ def setup_shift_type(**args):
 			"allow_check_out_after_shift_end_time": 60,
 			"process_attendance_after": add_days(date, -2),
 			"last_sync_of_checkin": now_datetime() + timedelta(days=1),
+			"mark_auto_attendance_on_holidays": args.mark_auto_attendance_on_holidays or False,
 		}
 	)
 

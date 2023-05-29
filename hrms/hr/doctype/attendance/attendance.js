@@ -1,15 +1,27 @@
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
-cur_frm.add_fetch('employee', 'company', 'company');
-cur_frm.add_fetch('employee', 'employee_name', 'employee_name');
+frappe.ui.form.on("Attendance Request", {
+	refresh(frm) {
+		frm.trigger("show_attendance_warnings");
+	},
 
-cur_frm.cscript.onload = function(doc, cdt, cdn) {
-	if(doc.__islocal) cur_frm.set_value("attendance_date", frappe.datetime.get_today());
-}
+	show_attendance_warnings(frm) {
+		if (!frm.is_new() && frm.doc.docstatus === 0) {
+			frm.dashboard.clear_headline();
 
-cur_frm.fields_dict.employee.get_query = function(doc,cdt,cdn) {
-	return{
-		query: "erpnext.controllers.queries.employee_query"
+			frm.call("get_attendance_warnings").then((r) => {
+				if (r.message?.length) {
+					frm.dashboard.reset();
+					frm.dashboard.add_section(
+						frappe.render_template("attendance_warnings", {
+							warnings: r.message || [],
+						}),
+						__("Attendance Warnings")
+					);
+					frm.dashboard.show();
+				}
+			})
+		}
 	}
-}
+});

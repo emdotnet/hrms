@@ -1,4 +1,5 @@
 import frappe
+
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, get_last_day, month_diff, flt
 
@@ -15,7 +16,8 @@ PERIODS = [
 	("2019-06-01", "2020-05-31"),
 	("2020-06-01", "2021-05-31"),
 	("2021-06-01", "2022-05-31"),
-	("2022-06-01", "2023-05-31")
+	("2022-06-01", "2023-05-31"),
+	("2023-06-01", "2024-05-31")
 ]
 
 
@@ -23,6 +25,9 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		frappe.flags.country = "France"
+		frappe.flags.company = None
+
+		frappe.db.delete("Leave Type")
 
 		setup()
 
@@ -70,7 +75,7 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 				doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
 
 		last_holiday_list = None
-		for year in [2018, 2019, 2020, 2021, 2022]:
+		for year in [2018, 2019, 2020, 2021, 2022, 2023]:
 			bank_holidays = [{"holiday_date": value, "description": key} for key, value in get_french_bank_holidays(year).items()]
 			holiday_list = make_holiday_list(
 				f"_Test France Holiday List {year}", f"{year}-01-01", f"{year}-12-31", bank_holidays
@@ -210,7 +215,8 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 
 
 	def test_leave_application_jours_ouvrables(self):
-		approver = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		emp = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		approver = frappe.db.get_value("Employee", emp, "user_id")
 		frappe.db.set_value("Employee", self.employee, "leave_approver", approver)
 
 		contract = frappe.get_doc({
@@ -258,7 +264,8 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 			self.assertEqual(total_leaves.get(index), doc.total_leave_days)
 
 	def test_leave_application_jours_ouvres(self):
-		approver = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		emp = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		approver = frappe.db.get_value("Employee", emp, "user_id")
 		frappe.db.set_value("Employee", self.employee, "leave_approver", approver)
 
 		contract = frappe.get_doc({
@@ -308,7 +315,8 @@ class TestFranceLeavesCalculation(FrappeTestCase):
 
 
 	def test_carry_forward(self):
-		approver = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		emp = make_employee("testfranceleavesappro@example.com", company="_Test Company")
+		approver = frappe.db.get_value("Employee", emp, "user_id")
 		frappe.db.set_value("Employee", self.employee, "leave_approver", approver)
 		leave_type = "Congés Payés sur jours ouvrables"
 
@@ -397,4 +405,4 @@ def get_leave_allocations_for_employee(date, employee, leave_type):
 			"leave_policy", "company", "leave_type", "new_leaves_allocated",
 			"total_leaves_allocated"
 		]
-		)
+	)

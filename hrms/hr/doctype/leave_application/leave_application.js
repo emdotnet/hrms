@@ -211,7 +211,7 @@ frappe.ui.form.on("Leave Application", {
 					"half_day_date": frm.doc.half_day_date,
 				},
 				callback: function(r) {
-					if (r && r.message) {
+					if (r && r.message !== undefined) {
 						frm.set_value('total_leave_days', r.message);
 						frm.trigger("get_leave_balance");
 					}

@@ -86,7 +86,7 @@ def before_tests():
 
 def set_defaults_for_tests():
 	system_settings = frappe.get_single("System Settings")
-	system_settings.float_precision = 2
+	system_settings.float_precision = 3
 	system_settings.currency_precision = 2
 	system_settings.save()
 

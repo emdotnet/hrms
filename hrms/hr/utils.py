@@ -14,6 +14,7 @@ from frappe.utils import (
 	get_first_day,
 	get_last_day,
 	get_link_to_form,
+	get_number_format_info,
 	getdate,
 	nowdate,
 )
@@ -55,15 +56,11 @@ def update_employee_work_history(employee, details, date=None, cancel=False):
 		field = frappe.get_meta("Employee").get_field(item.fieldname)
 		if not field:
 			continue
-		fieldtype = field.fieldtype
-		new_data = item.new if not cancel else item.current
-		if fieldtype == "Date" and new_data:
-			new_data = getdate(new_data)
-		elif fieldtype == "Datetime" and new_data:
-			new_data = get_datetime(new_data)
-		elif fieldtype in ["Currency", "Float"] and new_data:
-			new_data = flt(new_data)
-		setattr(employee, item.fieldname, new_data)
+
+		new_value = item.new if not cancel else item.current
+		new_value = get_formatted_value(new_value, field.fieldtype)
+		setattr(employee, item.fieldname, new_value)
+
 		if item.fieldname in ["department", "designation", "branch"]:
 			internal_work_history[item.fieldname] = item.new
 
@@ -77,6 +74,34 @@ def update_employee_work_history(employee, details, date=None, cancel=False):
 	update_to_date_in_work_history(employee, cancel)
 
 	return employee
+
+
+def get_formatted_value(value, fieldtype):
+	"""
+	Since the fields in Internal Work History table are `Data` fields
+	format them as per relevant field types
+	"""
+	if not value:
+		return
+
+	if fieldtype == "Date":
+		value = getdate(value)
+	elif fieldtype == "Datetime":
+		value = get_datetime(value)
+	elif fieldtype in ["Currency", "Float"]:
+		# in case of currency/float, the value might be in user's prefered number format
+		# instead of machine readable format. Convert it into a machine readable format
+		number_format = frappe.db.get_default("number_format") or "#,###.##"
+		decimal_str, comma_str, _number_format_precision = get_number_format_info(number_format)
+
+		if comma_str == "." and decimal_str == ",":
+			value = value.replace(",", "#$")
+			value = value.replace(".", ",")
+			value = value.replace("#$", ".")
+
+		value = flt(value)
+
+	return value
 
 
 def delete_employee_work_history(details, employee, date):
@@ -326,7 +351,7 @@ def allocate_earned_leaves():
 			from_date = allocation.from_date
 
 			if e_leave_type.allocate_on_day == "Date of Joining":
-				from_date = frappe.db.get_value("Employee", allocation.employee, "date_of_joining")
+				from_date = date_of_joining
 
 			if check_effective_date(
 				from_date, today, e_leave_type.earned_leave_frequency, e_leave_type.allocate_on_day
@@ -335,17 +360,30 @@ def allocate_earned_leaves():
 
 
 def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type, date_of_joining):
+	allocation = frappe.get_doc("Leave Allocation", allocation.name)
+	annual_allocation = flt(annual_allocation, allocation.precision("total_leaves_allocated"))
+
 	earned_leaves = get_monthly_earned_leave(
-		date_of_joining, annual_allocation, e_leave_type.earned_leave_frequency, e_leave_type.rounding
+		date_of_joining,
+		annual_allocation,
+		e_leave_type.earned_leave_frequency,
+		e_leave_type.rounding,
 	)
 
-	allocation = frappe.get_doc("Leave Allocation", allocation.name)
 	new_allocation = flt(allocation.total_leaves_allocated) + flt(earned_leaves)
+	new_allocation_without_cf = flt(
+		flt(allocation.get_existing_leave_count()) + flt(earned_leaves),
+		allocation.precision("total_leaves_allocated"),
+	)
 
 	if new_allocation > e_leave_type.max_leaves_allowed and e_leave_type.max_leaves_allowed > 0:
 		new_allocation = e_leave_type.max_leaves_allowed
 
-	if new_allocation != allocation.total_leaves_allocated:
+	if (
+		new_allocation != allocation.total_leaves_allocated
+		# annual allocation as per policy should not be exceeded
+		and new_allocation_without_cf <= annual_allocation
+	):
 		today_date = frappe.flags.current_date or getdate()
 
 		allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
@@ -368,20 +406,23 @@ def get_monthly_earned_leave(
 	rounding,
 	period_start_date=None,
 	period_end_date=None,
+	pro_rated=True,
 ):
 	earned_leaves = 0.0
 	divide_by_frequency = {"Yearly": 1, "Half-Yearly": 2, "Quarterly": 4, "Monthly": 12}
 	if annual_leaves:
 		earned_leaves = flt(annual_leaves) / divide_by_frequency[frequency]
 
-		if not (period_start_date or period_end_date):
-			today_date = frappe.flags.current_date or getdate()
-			period_end_date = get_last_day(today_date)
-			period_start_date = get_first_day(today_date)
+		if pro_rated:
+			if not (period_start_date or period_end_date):
+				today_date = frappe.flags.current_date or getdate()
+				period_end_date = get_last_day(today_date)
+				period_start_date = get_first_day(today_date)
 
-		earned_leaves = calculate_pro_rated_leaves(
-			earned_leaves, date_of_joining, period_start_date, period_end_date, is_earned_leave=True
-		)
+			earned_leaves = calculate_pro_rated_leaves(
+				earned_leaves, date_of_joining, period_start_date, period_end_date, is_earned_leave=True
+			)
+
 		earned_leaves = round_earned_leaves(earned_leaves, rounding)
 
 	return earned_leaves
@@ -399,27 +440,6 @@ def round_earned_leaves(earned_leaves, rounding):
 		earned_leaves = round(earned_leaves)
 
 	return earned_leaves
-
-
-def is_earned_leave_already_allocated(allocation, annual_allocation):
-	from hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment import get_leave_type_details
-
-	leave_type_details = get_leave_type_details()
-	date_of_joining = frappe.db.get_value("Employee", allocation.employee, "date_of_joining")
-
-	assignment = frappe.get_doc("Leave Policy Assignment", allocation.leave_policy_assignment)
-	leaves_for_passed_months = assignment.get_leaves_for_passed_months(
-		allocation.leave_type, annual_allocation, leave_type_details, date_of_joining
-	)
-
-	# exclude carry-forwarded leaves while checking for leave allocation for passed months
-	num_allocations = allocation.total_leaves_allocated
-	if allocation.unused_leaves:
-		num_allocations -= allocation.unused_leaves
-
-	if num_allocations >= leaves_for_passed_months:
-		return True
-	return False
 
 
 def get_leave_allocations(date, leave_type):
@@ -640,7 +660,7 @@ def share_doc_with_approver(doc, user):
 		)
 
 		frappe.msgprint(
-			_("Shared with the user {0} with {1} access").format(user, frappe.bold("submit"), alert=True)
+			_("Shared with the user {0} with {1} access").format(user, frappe.bold(_("submit")), alert=True)
 		)
 
 	# remove shared doc if approver changes

@@ -181,7 +181,6 @@
    "options": "Monthly\nQuarterly\nHalf-Yearly\nYearly"
   },
   {
-   "default": "0.5",
    "depends_on": "is_earned_leave",
    "fieldname": "rounding",
    "fieldtype": "Select",
@@ -275,7 +274,7 @@
  "icon": "fa fa-flag",
  "idx": 1,
  "links": [],
- "modified": "2023-02-15 10:19:49.181649",
+ "modified": "2023-05-26 14:15:29.695487",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Type",

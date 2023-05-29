@@ -139,7 +139,7 @@ class TestSalarySlip(FrappeTestCase):
 			(78000 / (days_in_month - no_of_holidays)) * flt(ss.leave_without_pay + ss.absent_days)
 		)
 
-		self.assertEqual(ss.gross_pay, gross_pay)
+		self.assertEqual(rounded(ss.gross_pay), rounded(gross_pay))
 
 	@change_settings(
 		"Payroll Settings",
@@ -301,7 +301,6 @@ class TestSalarySlip(FrappeTestCase):
 		make_leave_application(emp_id, first_sunday, add_days(first_sunday, 3), "Leave Without Pay")
 
 		leave_type_ppl = create_leave_type(leave_type_name="Test Partially Paid Leave", is_ppl=1)
-		leave_type_ppl.save()
 
 		alloc = create_leave_allocation(
 			employee=emp_id,
@@ -1166,7 +1165,7 @@ class TestSalarySlip(FrappeTestCase):
 		)
 		for deduction in salary_slip.deductions:
 			if deduction.salary_component == "TDS":
-				self.assertEqual(deduction.amount, 7732.0)
+				self.assertEqual(deduction.amount, 7691.0)
 
 		frappe.db.sql("DELETE FROM `tabPayroll Period` where company = '_Test Company'")
 		frappe.db.sql("DELETE FROM `tabIncome Tax Slab` where currency = 'INR'")
@@ -1213,7 +1212,7 @@ class TestSalarySlip(FrappeTestCase):
 			salary_structure_doc.name, employee=employee_doc.name, posting_date=payroll_period.start_date
 		)
 
-		monthly_tax_amount = 11466.0
+		monthly_tax_amount = 11403.6
 
 		self.assertEqual(salary_slip.ctc, 1226000.0)
 		self.assertEqual(salary_slip.income_from_other_sources, 10000.0)
@@ -1223,10 +1222,110 @@ class TestSalarySlip(FrappeTestCase):
 		self.assertEqual(salary_slip.tax_exemption_declaration, 100000.0)
 		self.assertEqual(salary_slip.deductions_before_tax_calculation, 2400.0)
 		self.assertEqual(salary_slip.annual_taxable_amount, 1073600.0)
-		self.assertEqual(flt(salary_slip.income_tax_deducted_till_date, 1), monthly_tax_amount)
-		self.assertEqual(flt(salary_slip.current_month_income_tax, 1), monthly_tax_amount)
-		self.assertEqual(flt(salary_slip.future_income_tax_deductions, 1), 126126.0)
-		self.assertEqual(flt(salary_slip.total_income_tax, 0), 137592)
+		self.assertEqual(flt(salary_slip.income_tax_deducted_till_date, 2), monthly_tax_amount)
+		self.assertEqual(flt(salary_slip.current_month_income_tax, 2), monthly_tax_amount)
+		self.assertEqual(flt(salary_slip.future_income_tax_deductions, 2), 125439.65)
+		self.assertEqual(flt(salary_slip.total_income_tax, 2), 136843.25)
+
+	@change_settings("Payroll Settings", {"payroll_based_on": "Leave"})
+	def test_lwp_calculation_based_on_relieving_date(self):
+		emp_id = make_employee("test_lwp_based_on_relieving_date@salary.com")
+		frappe.db.set_value("Employee", emp_id, {"relieving_date": None, "status": "Active"})
+		frappe.db.set_value("Leave Type", "Leave Without Pay", "include_holiday", 0)
+
+		month_start_date = get_first_day(nowdate())
+		first_sunday = get_first_sunday(for_date=month_start_date)
+		relieving_date = add_days(first_sunday, 10)
+		leave_start_date = add_days(first_sunday, 16)
+		leave_end_date = add_days(leave_start_date, 2)
+
+		make_leave_application(emp_id, leave_start_date, leave_end_date, "Leave Without Pay")
+
+		frappe.db.set_value("Employee", emp_id, {"relieving_date": relieving_date, "status": "Left"})
+
+		ss = make_employee_salary_slip(
+			"test_lwp_based_on_relieving_date@salary.com",
+			"Monthly",
+			"Test Payment Based On Leave Application",
+		)
+
+		holidays = ss.get_holidays_for_employee(month_start_date, relieving_date)
+		days_between_start_and_relieving = date_diff(relieving_date, month_start_date) + 1
+
+		self.assertEqual(ss.leave_without_pay, 0)
+
+		self.assertEqual(ss.payment_days, (days_between_start_and_relieving - len(holidays)))
+
+	def test_zero_value_component(self):
+		from hrms.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
+
+		emp = make_employee(
+			"test_zero_value_component@salary.com",
+			company="_Test Company",
+			**{"date_of_joining": "2021-12-01"},
+		)
+
+		payroll_period = frappe.get_all("Payroll Period", filters={"company": "_Test Company"}, limit=1)
+		payroll_period = frappe.get_cached_doc("Payroll Period", payroll_period[0].name)
+
+		salary_structure_name = "Test zero value component"
+		if not frappe.db.exists("Salary Structure", salary_structure_name):
+			salary_structure_doc = make_salary_structure(
+				salary_structure_name,
+				"Monthly",
+				company="_Test Company",
+				employee=emp,
+				from_date=payroll_period.start_date,
+				payroll_period=payroll_period,
+				base=65000,
+			)
+
+		# Create Salary Slip
+		salary_slip = make_salary_slip(
+			salary_structure_doc.name, employee=emp, posting_date=payroll_period.start_date
+		)
+		earnings = {d.salary_component: d.amount for d in salary_slip.earnings}
+
+		# Check if zero value component is included in salary slip based on component settings
+		self.assertIn("Arrear", earnings)
+		self.assertEqual(earnings["Arrear"], 0.0)
+		self.assertNotIn("Overtime", earnings)
+
+	def test_component_default_amount_against_statistical_component(self):
+		from hrms.payroll.doctype.salary_structure.test_salary_structure import (
+			create_salary_structure_assignment,
+		)
+
+		emp = make_employee(
+			"test_default_value_for_statistical_component@salary.com",
+			company="_Test Company",
+			**{"date_of_joining": "2021-12-01"},
+		)
+
+		salary_structure_doc = make_salary_structure_for_statistical_component("_Test Company")
+
+		create_salary_structure_assignment(
+			employee=emp,
+			salary_structure=salary_structure_doc.name,
+			company="_Test Company",
+			currency="INR",
+			base=40000,
+		)
+
+		# Create Salary Slip
+		salary_slip = make_salary_slip(salary_structure_doc.name, employee=emp, posting_date=nowdate())
+
+		for earning in salary_slip.earnings:
+			if earning.salary_component == "Leave Travel Allowance":
+				# formula for statistical component is, SC = base - BS - H
+				# formula for Leave Travel Allowance is , LTA = base - SC
+				# base = 40000
+				# BS = base * 0.4 = 16000
+				# H = 3000
+				# SC = 40000 - 16000 - 3000 = 21000
+				# LTA = 40000 - 21000 = 19000
+
+				self.assertEqual(earning.default_amount, 19000)
 
 
 def get_no_of_days():
@@ -1372,6 +1471,22 @@ def make_earning_salary_component(
 			"type": "Earning",
 			"statistical_component": 1,
 			"amount": 500,
+		},
+		{
+			"salary_component": "Arrear",
+			"abbr": "A",
+			"type": "Earning",
+			"depends_on_payment_days": 0,
+			"amount": 0,
+			"remove_if_zero_valued": 0,
+		},
+		{
+			"salary_component": "Overtime",
+			"abbr": "OT",
+			"type": "Earning",
+			"depends_on_payment_days": 0,
+			"amount": 0,
+			"remove_if_zero_valued": 1,
 		},
 	]
 	if include_flexi_benefits:
@@ -1711,7 +1826,7 @@ def make_payroll_period():
 			pp = create_payroll_period(company=company, name=company_based_payroll_period[company])
 
 
-def make_holiday_list(list_name=None, from_date=None, to_date=None):
+def make_holiday_list(list_name=None, from_date=None, to_date=None, add_weekly_offs=True):
 	fiscal_year = get_fiscal_year(nowdate(), company=erpnext.get_default_company())
 	name = list_name or "Salary Slip Test Holiday List"
 
@@ -1723,10 +1838,13 @@ def make_holiday_list(list_name=None, from_date=None, to_date=None):
 			"holiday_list_name": name,
 			"from_date": from_date or fiscal_year[1],
 			"to_date": to_date or fiscal_year[2],
-			"weekly_off": "Sunday",
 		}
 	).insert()
-	holiday_list.get_weekly_off_dates()
+
+	if add_weekly_offs:
+		holiday_list.weekly_off = "Sunday"
+		holiday_list.get_weekly_off_dates()
+
 	holiday_list.save()
 	holiday_list = holiday_list.name
 
@@ -1944,3 +2062,73 @@ def create_additional_salary_for_non_taxable_component(employee, payroll_period,
 	).insert()
 
 	add_sal.submit()
+
+
+def make_salary_structure_for_statistical_component(company):
+	earnings = [
+		{
+			"salary_component": "Basic Component",
+			"abbr": "BSC",
+			"formula": "base * 0.4",
+			"type": "Earning",
+			"amount_based_on_formula": 1,
+		},
+		{"salary_component": "HRA Component", "abbr": "HRAC", "amount": 3000, "type": "Earning"},
+		{
+			"salary_component": "Statistical Component",
+			"abbr": "SC",
+			"type": "Earning",
+			"formula": "base - BSC - HRAC",
+			"statistical_component": 1,
+			"amount_based_on_formula": 1,
+			"depends_on_payment_days": 0,
+		},
+		{
+			"salary_component": "Leave Travel Allowance",
+			"abbr": "LTA",
+			"formula": "base - SC",
+			"type": "Earning",
+			"amount_based_on_formula": 1,
+			"depends_on_payment_days": 0,
+		},
+	]
+
+	make_salary_component(earnings, False, company_list=[company])
+
+	deductions = [
+		{
+			"salary_component": "P - Professional Tax",
+			"abbr": "P_PT",
+			"type": "Deduction",
+			"depends_on_payment_days": 1,
+			"amount": 200.00,
+		},
+	]
+
+	make_salary_component(deductions, False, company_list=["_Test Company"])
+
+	salary_structure = "Salary Structure with Statistical Component"
+	if frappe.db.exists("Salary Structure", salary_structure):
+		frappe.db.delete("Salary Structure", salary_structure)
+
+	details = {
+		"doctype": "Salary Structure",
+		"name": salary_structure,
+		"company": "_Test Company",
+		"payroll_frequency": "Monthly",
+		"payment_account": get_random("Account", filters={"account_currency": "INR"}),
+		"currency": "INR",
+	}
+
+	salary_structure_doc = frappe.get_doc(details)
+
+	for entry in earnings:
+		salary_structure_doc.append("earnings", entry)
+
+	for entry in deductions:
+		salary_structure_doc.append("deductions", entry)
+
+	salary_structure_doc.insert()
+	salary_structure_doc.submit()
+
+	return salary_structure_doc
