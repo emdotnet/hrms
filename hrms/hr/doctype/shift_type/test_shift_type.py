@@ -362,7 +362,7 @@ class TestShiftType(FrappeTestCase):
 
 		assigned_shift.process_auto_attendance()
 		attendance = frappe.db.get_value(
-			"Attendance", {"employee": employee, "shift": default_shift.name}, "status"
+			"Attendance", {"employee": employee, "shift": assigned_shift.name}, "status"
 		)
 		self.assertEqual(attendance, "Present")
 
