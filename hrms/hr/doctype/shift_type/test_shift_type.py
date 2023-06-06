@@ -518,7 +518,7 @@ def make_shift_assignment(shift_type, employee, start_date, end_date=None, do_no
 			"start_date": start_date,
 			"end_date": end_date,
 		}
-	).insert()
+	)
 
 	if not do_not_submit:
 		shift_assignment.submit()
