@@ -4,6 +4,7 @@
     "@fullcalendar/core": "^5.11.0",
     "@fullcalendar/interaction": "^5.11.0",
     "@fullcalendar/resource-common": "^5.11.0",
-    "@fullcalendar/resource-timeline": "^5.11.0"
+    "@fullcalendar/resource-timeline": "^5.11.0",
+    "html2canvas": "^1.4.1"
   }
 }
