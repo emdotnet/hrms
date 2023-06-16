@@ -27,4 +27,4 @@ def execute():
 	)
 
 	for d in data:
-		frappe.db.set_value("Payroll Settings", None, d.field, d.value)
+		frappe.db.set_single_value("Payroll Settings", d.field, d.value)
