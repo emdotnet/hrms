@@ -5,7 +5,7 @@ import unittest
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_months, getdate
+from frappe.utils import add_months, getdate, flt
 
 import erpnext
 from erpnext.setup.doctype.employee.test_employee import make_employee
@@ -187,7 +187,7 @@ class TestEmployeeTaxExemptionDeclaration(FrappeTestCase):
 
 		# Daily HRA received = 3000
 		# should set HRA exemption as per (rent - 10% of Basic Salary), that's the minimum
-		self.assertEqual(declaration.monthly_hra_exemption, 17916.67)
+		self.assertEqual(flt(declaration.monthly_hra_exemption, 2), 17916.67)
 		self.assertEqual(declaration.annual_hra_exemption, 215000)
 		# 50000 Standard Exemption + 215000 HRA exemption
 		self.assertEqual(declaration.total_exemption_amount, 265000)
