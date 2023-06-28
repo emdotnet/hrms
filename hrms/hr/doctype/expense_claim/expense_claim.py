@@ -160,6 +160,7 @@ class ExpenseClaim(AccountsController):
 						"against_voucher_type": self.doctype,
 						"against_voucher": self.name,
 						"cost_center": self.cost_center,
+						"project": self.project,
 					},
 					item=self,
 				)
@@ -175,6 +176,7 @@ class ExpenseClaim(AccountsController):
 						"debit_in_account_currency": data.sanctioned_amount,
 						"against": self.employee,
 						"cost_center": data.cost_center or self.cost_center,
+						"project": data.project or self.project,
 					},
 					item=data,
 				)
@@ -242,6 +244,7 @@ class ExpenseClaim(AccountsController):
 						"debit_in_account_currency": tax.tax_amount,
 						"against": self.employee,
 						"cost_center": self.cost_center,
+						"project": tax.project or self.project,
 						"against_voucher_type": self.doctype,
 						"against_voucher": self.name,
 					},
@@ -447,7 +450,8 @@ def get_expense_claim_account(expense_claim_type, company):
 	if not account:
 		frappe.throw(
 			_("Set the default account for the {0} {1}").format(
-				frappe.bold(_("Expense Claim Type")), get_link_to_form("Expense Claim Type", expense_claim_type)
+				frappe.bold(_("Expense Claim Type")),
+				get_link_to_form("Expense Claim Type", expense_claim_type),
 			)
 		)
 
