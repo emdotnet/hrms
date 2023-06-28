@@ -109,7 +109,7 @@ class PayrollEntry(Document):
 		self.db_set("error_message", "")
 
 	def make_filters(self):
-		filters = frappe._dict(
+		return frappe._dict(
 			company=self.company,
 			branch=self.branch,
 			department=self.department,
@@ -121,11 +121,6 @@ class PayrollEntry(Document):
 			payroll_payable_account=self.payroll_payable_account,
 			salary_slip_based_on_timesheet=self.salary_slip_based_on_timesheet,
 		)
-
-		if not self.salary_slip_based_on_timesheet:
-			filters.update(dict(payroll_frequency=self.payroll_frequency))
-
-		return filters
 
 	@frappe.whitelist()
 	def fill_employee_details(self):
@@ -291,7 +286,6 @@ class PayrollEntry(Document):
 		salary_components = self.get_salary_components(component_type)
 		if salary_components:
 			component_dict = {}
-			self.employee_cost_centers = {}
 
 			for item in salary_components:
 				add_component_to_accrual_jv_entry = True
@@ -321,12 +315,21 @@ class PayrollEntry(Document):
 
 			return account_details
 
-	def set_employee_based_payroll_payable_entries(self, component_type, employee, amount):
-		self.employee_based_payroll_payable_entries.setdefault(employee, {})
-		self.employee_based_payroll_payable_entries[employee].setdefault(component_type, 0)
-		self.employee_based_payroll_payable_entries[employee][component_type] += amount
+	def set_employee_based_payroll_payable_entries(
+		self, component_type, employee, amount, salary_structure=None
+	):
+		employee_details = self.employee_based_payroll_payable_entries.setdefault(employee, {})
+
+		employee_details.setdefault(component_type, 0)
+		employee_details[component_type] += amount
+
+		if salary_structure and "salary_structure" not in employee_details:
+			employee_details["salary_structure"] = salary_structure
 
 	def get_payroll_cost_centers_for_employee(self, employee, salary_structure):
+		if not hasattr(self, "employee_cost_centers"):
+			self.employee_cost_centers = {}
+
 		if not self.employee_cost_centers.get(employee):
 			SalaryStructureAssignment = frappe.qb.DocType("Salary Structure Assignment")
 			EmployeeCostCenter = frappe.qb.DocType("Employee Cost Center")
@@ -706,7 +709,10 @@ class PayrollEntry(Document):
 					else:
 						if employee_wise_accounting_enabled:
 							self.set_employee_based_payroll_payable_entries(
-								"earnings", salary_detail.employee, salary_detail.amount
+								"earnings",
+								salary_detail.employee,
+								salary_detail.amount,
+								salary_detail.salary_structure,
 							)
 						salary_slip_total += salary_detail.amount
 
@@ -718,7 +724,10 @@ class PayrollEntry(Document):
 				if not statistical_component:
 					if employee_wise_accounting_enabled:
 						self.set_employee_based_payroll_payable_entries(
-							"deductions", salary_detail.employee, salary_detail.amount
+							"deductions",
+							salary_detail.employee,
+							salary_detail.amount,
+							salary_detail.salary_structure,
 						)
 
 					salary_slip_total -= salary_detail.amount
@@ -737,6 +746,7 @@ class PayrollEntry(Document):
 			.select(
 				SalarySlip.name,
 				SalarySlip.employee,
+				SalarySlip.salary_structure,
 				SalaryDetail.salary_component,
 				SalaryDetail.amount,
 				SalaryDetail.parentfield,
@@ -768,6 +778,7 @@ class PayrollEntry(Document):
 					"bank_account": self.bank_account,
 					"credit_in_account_currency": flt(amount, precision),
 					"exchange_rate": flt(exchange_rate),
+					"cost_center": self.cost_center,
 				},
 				accounting_dimensions,
 			)
@@ -782,20 +793,27 @@ class PayrollEntry(Document):
 					self.payment_account, je_payment_amount, company_currency, currencies
 				)
 
-				accounts.append(
-					self.update_accounting_dimensions(
-						{
-							"account": payroll_payable_account,
-							"debit_in_account_currency": flt(amount, precision),
-							"exchange_rate": flt(exchange_rate),
-							"reference_type": self.doctype,
-							"reference_name": self.name,
-							"party_type": "Employee",
-							"party": employee,
-						},
-						accounting_dimensions,
-					)
+				cost_centers = self.get_payroll_cost_centers_for_employee(
+					employee, employee_details.get("salary_structure")
 				)
+
+				for cost_center, percentage in cost_centers.items():
+					amount_against_cost_center = flt(amount) * percentage / 100
+					accounts.append(
+						self.update_accounting_dimensions(
+							{
+								"account": payroll_payable_account,
+								"debit_in_account_currency": flt(amount_against_cost_center, precision),
+								"exchange_rate": flt(exchange_rate),
+								"reference_type": self.doctype,
+								"reference_name": self.name,
+								"party_type": "Employee",
+								"party": employee,
+								"cost_center": cost_center,
+							},
+							accounting_dimensions,
+						)
+					)
 		else:
 			exchange_rate, amount = self.get_amount_and_exchange_rate_for_journal_entry(
 				payroll_payable_account, je_payment_amount, company_currency, currencies
@@ -808,6 +826,7 @@ class PayrollEntry(Document):
 						"exchange_rate": flt(exchange_rate),
 						"reference_type": self.doctype,
 						"reference_name": self.name,
+						"cost_center": self.cost_center,
 					},
 					accounting_dimensions,
 				)
@@ -924,12 +943,11 @@ class PayrollEntry(Document):
 		return holiday_list_based_count[key] or 0
 
 
-def get_salary_structure(
+def get_sal_struct(
 	company: str, currency: str, salary_slip_based_on_timesheet: int, payroll_frequency: str
 ) -> list[str]:
 	SalaryStructure = frappe.qb.DocType("Salary Structure")
-
-	query = (
+	return (
 		frappe.qb.from_(SalaryStructure)
 		.select(SalaryStructure.name)
 		.where(
@@ -938,13 +956,10 @@ def get_salary_structure(
 			& (SalaryStructure.company == company)
 			& (SalaryStructure.currency == currency)
 			& (SalaryStructure.salary_slip_based_on_timesheet == salary_slip_based_on_timesheet)
+			& (SalaryStructure.payroll_frequency == payroll_frequency)
 		)
-	)
+	).run(pluck=True)
 
-	if not salary_slip_based_on_timesheet:
-		query = query.where(SalaryStructure.payroll_frequency == payroll_frequency)
-
-	return query.run(pluck=True)
 
 def get_filtered_employees(
 	sal_struct,
@@ -1331,7 +1346,7 @@ def get_employee_list(
 	offset=None,
 	ignore_match_conditions=False,
 ) -> list:
-	sal_struct = get_salary_structure(
+	sal_struct = get_sal_struct(
 		filters.company,
 		filters.currency,
 		filters.salary_slip_based_on_timesheet,
