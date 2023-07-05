@@ -46,12 +46,8 @@ doctype_js = {
 }
 
 doctype_regional_js = {
-	"Holiday List": {
-		"France": "public/js/regional/france/holiday_list.js"
-	},
-	"Leave Type": {
-		"France": "public/js/regional/france/leave_type.js"
-	}
+	"Holiday List": {"France": "public/js/regional/france/holiday_list.js"},
+	"Leave Type": {"France": "public/js/regional/france/leave_type.js"},
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -99,6 +95,23 @@ after_migrate = "hrms.setup.update_select_perm_after_install"
 
 before_uninstall = "hrms.uninstall.before_uninstall"
 # after_uninstall = "hrms.uninstall.after_uninstall"
+
+# Integration Setup
+# ------------------
+# To set up dependencies/integrations with other apps
+# Name of the app being installed is passed as an argument
+
+# before_app_install = "hrms.utils.before_app_install"
+after_app_install = "hrms.setup.after_app_install"
+
+# Integration Cleanup
+# -------------------
+# To clean up dependencies/integrations with other apps
+# Name of the app being uninstalled is passed as an argument
+
+before_app_uninstall = "hrms.setup.before_app_uninstall"
+# after_app_uninstall = "hrms.utils.after_app_uninstall"
+
 
 # Desk Notifications
 # ------------------
@@ -179,8 +192,8 @@ doc_events = {
 	},
 	"Task": {
 		"on_update": "hrms.controllers.employee_boarding_controller.update_task",
-		"after_delete": "hrms.controllers.employee_boarding_controller.update_task"
-	}
+		"after_delete": "hrms.controllers.employee_boarding_controller.update_task",
+	},
 }
 
 # Scheduled Tasks
@@ -245,7 +258,7 @@ regional_overrides = {
 	"France": {
 		"hrms.hr.doctype.leave_application.leave_application.get_regional_number_of_leave_days": "hrms.regional.france.hr.utils.get_regional_number_of_leave_days",
 		"hrms.hr.utils.allocate_earned_leaves": "hrms.regional.france.hr.utils.allocate_earned_leaves",
-	}
+	},
 }
 
 # ERPNext doctypes for Global Search

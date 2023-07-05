@@ -1,25 +1,11 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-import unittest
-
-from dateutil.relativedelta import relativedelta
-
 import frappe
 from frappe.tests.utils import FrappeTestCase, change_settings
-from frappe.utils import add_months
 
 import erpnext
-from erpnext.accounts.utils import get_fiscal_year, getdate, nowdate
-from erpnext.loan_management.doctype.loan.test_loan import (
-	create_loan,
-	create_loan_accounts,
-	create_loan_type,
-	make_loan_disbursement_entry,
-)
-from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import (
-	process_loan_interest_accrual_for_term_loans,
-)
+from erpnext.accounts.utils import nowdate
 from erpnext.setup.doctype.employee.test_employee import make_employee
 
 from hrms.payroll.doctype.payroll_entry.payroll_entry import (
@@ -33,10 +19,7 @@ from hrms.payroll.doctype.salary_slip.test_salary_slip import (
 	make_earning_salary_component,
 	set_salary_component_account,
 )
-from hrms.payroll.doctype.salary_structure.test_salary_structure import (
-	create_salary_structure_assignment,
-	make_salary_structure,
-)
+from hrms.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
 from hrms.tests.test_utils import create_department
 
 test_dependencies = ["Holiday List"]
@@ -53,7 +36,6 @@ class TestPayrollEntry(FrappeTestCase):
 			"Salary Structure Assignment",
 			"Payroll Employee Detail",
 			"Additional Salary",
-			"Loan",
 		]:
 			frappe.db.delete(dt)
 
@@ -194,84 +176,6 @@ class TestPayrollEntry(FrappeTestCase):
 		self.assertEqual(get_end_date("2020-02-15", "bimonthly"), {"end_date": ""})
 		self.assertEqual(get_end_date("2017-02-15", "monthly"), {"end_date": "2017-03-14"})
 		self.assertEqual(get_end_date("2017-02-15", "daily"), {"end_date": "2017-02-15"})
-
-	def test_loan(self):
-		company = "_Test Company"
-		branch = "Test Employee Branch"
-
-		if not frappe.db.exists("Branch", branch):
-			frappe.get_doc({"doctype": "Branch", "branch": branch}).insert()
-		holiday_list = make_holiday("test holiday for loan")
-
-		applicant = make_employee(
-			"test_employee@loan.com", company="_Test Company", branch=branch, holiday_list=holiday_list
-		)
-		company_doc = frappe.get_doc("Company", company)
-
-		make_salary_structure(
-			"Test Salary Structure for Loan",
-			"Monthly",
-			employee=applicant,
-			company="_Test Company",
-			currency=company_doc.default_currency,
-		)
-
-		if not frappe.db.exists("Loan Type", "Car Loan"):
-			create_loan_accounts()
-			create_loan_type(
-				"Car Loan",
-				500000,
-				8.4,
-				is_term_loan=1,
-				mode_of_payment="Cash",
-				disbursement_account="Disbursement Account - _TC",
-				payment_account="Payment Account - _TC",
-				loan_account="Loan Account - _TC",
-				interest_income_account="Interest Income Account - _TC",
-				penalty_income_account="Penalty Income Account - _TC",
-				repayment_schedule_type="Monthly as per repayment start date",
-			)
-
-		loan = create_loan(
-			applicant,
-			"Car Loan",
-			280000,
-			"Repay Over Number of Periods",
-			20,
-			posting_date=add_months(nowdate(), -1),
-		)
-		loan.repay_from_salary = 1
-		loan.submit()
-
-		make_loan_disbursement_entry(
-			loan.name, loan.loan_amount, disbursement_date=add_months(nowdate(), -1)
-		)
-		process_loan_interest_accrual_for_term_loans(posting_date=nowdate())
-
-		dates = get_start_end_dates("Monthly", nowdate())
-		make_payroll_entry(
-			company="_Test Company",
-			start_date=dates.start_date,
-			payable_account=company_doc.default_payroll_payable_account,
-			currency=company_doc.default_currency,
-			end_date=dates.end_date,
-			branch=branch,
-			cost_center="Main - _TC",
-			payment_account="Cash - _TC",
-		)
-
-		name = frappe.db.get_value(
-			"Salary Slip", {"posting_date": nowdate(), "employee": applicant}, "name"
-		)
-
-		salary_slip = frappe.get_doc("Salary Slip", name)
-		for row in salary_slip.loans:
-			if row.loan == loan.name:
-				interest_amount = (280000 * 8.4) / (12 * 100)
-				principal_amount = loan.monthly_repayment_amount - interest_amount
-				self.assertEqual(row.interest_amount, interest_amount)
-				self.assertEqual(row.principal_amount, principal_amount)
-				self.assertEqual(row.total_payment, interest_amount + principal_amount)
 
 	def test_salary_slip_operation_queueing(self):
 		company = "_Test Company"
@@ -610,32 +514,6 @@ def get_payment_account():
 		{"account_type": "Cash", "company": erpnext.get_default_company(), "is_group": 0},
 		"name",
 	)
-
-
-def make_holiday(holiday_list_name):
-	if not frappe.db.exists("Holiday List", holiday_list_name):
-		current_fiscal_year = get_fiscal_year(nowdate(), as_dict=True)
-		dt = getdate(nowdate())
-
-		new_year = dt + relativedelta(month=1, day=1, year=dt.year)
-		republic_day = dt + relativedelta(month=1, day=26, year=dt.year)
-		test_holiday = dt + relativedelta(month=2, day=2, year=dt.year)
-
-		frappe.get_doc(
-			{
-				"doctype": "Holiday List",
-				"from_date": current_fiscal_year.year_start_date,
-				"to_date": current_fiscal_year.year_end_date,
-				"holiday_list_name": holiday_list_name,
-				"holidays": [
-					{"holiday_date": new_year, "description": "New Year"},
-					{"holiday_date": republic_day, "description": "Republic Day"},
-					{"holiday_date": test_holiday, "description": "Test Holiday"},
-				],
-			}
-		).insert()
-
-	return holiday_list_name
 
 
 def setup_salary_structure(employee, company_doc, currency=None, salary_structure=None):

@@ -585,77 +585,6 @@ class TestSalarySlip(FrappeTestCase):
 		email_queue = frappe.db.a_row_exists("Email Queue")
 		self.assertTrue(email_queue)
 
-	def test_loan_repayment_salary_slip(self):
-		from erpnext.loan_management.doctype.loan.test_loan import (
-			create_loan,
-			create_loan_accounts,
-			create_loan_type,
-			make_loan_disbursement_entry,
-		)
-		from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import (
-			process_loan_interest_accrual_for_term_loans,
-		)
-
-		from hrms.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
-
-		applicant = make_employee("test_loan_repayment_salary_slip@salary.com", company="_Test Company")
-
-		create_loan_accounts()
-
-		create_loan_type(
-			"Car Loan",
-			500000,
-			8.4,
-			is_term_loan=1,
-			mode_of_payment="Cash",
-			disbursement_account="Disbursement Account - _TC",
-			payment_account="Payment Account - _TC",
-			loan_account="Loan Account - _TC",
-			interest_income_account="Interest Income Account - _TC",
-			penalty_income_account="Penalty Income Account - _TC",
-			repayment_schedule_type="Monthly as per repayment start date",
-		)
-
-		payroll_period = create_payroll_period(name="_Test Payroll Period", company="_Test Company")
-
-		make_salary_structure(
-			"Test Loan Repayment Salary Structure",
-			"Monthly",
-			employee=applicant,
-			currency="INR",
-			payroll_period=payroll_period,
-		)
-
-		frappe.db.sql(
-			"delete from tabLoan where applicant = 'test_loan_repayment_salary_slip@salary.com'"
-		)
-		loan = create_loan(
-			applicant,
-			"Car Loan",
-			11000,
-			"Repay Over Number of Periods",
-			20,
-			posting_date=add_months(nowdate(), -1),
-		)
-		loan.repay_from_salary = 1
-		loan.submit()
-
-		make_loan_disbursement_entry(
-			loan.name, loan.loan_amount, disbursement_date=add_months(nowdate(), -1)
-		)
-
-		process_loan_interest_accrual_for_term_loans(posting_date=nowdate())
-
-		ss = make_employee_salary_slip(
-			"test_loan_repayment_salary_slip@salary.com", "Monthly", "Test Loan Repayment Salary Structure"
-		)
-		ss.submit()
-
-		self.assertEqual(ss.total_loan_repayment, 592)
-		self.assertEqual(
-			ss.net_pay, (flt(ss.gross_pay) - (flt(ss.total_deduction) + flt(ss.total_loan_repayment)))
-		)
-
 	def test_payroll_frequency(self):
 		fiscal_year = get_fiscal_year(nowdate(), company=erpnext.get_default_company())[0]
 		month = "%02d" % getdate(nowdate()).month
@@ -2128,6 +2057,7 @@ def make_salary_structure_for_statistical_component(company):
 	salary_structure_doc.submit()
 
 	return salary_structure_doc
+
 
 def mark_attendance(
 	employee,
