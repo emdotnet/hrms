@@ -174,7 +174,7 @@ erpnext.resource_calendar.resourceCalendar = class ResourceCalendar {
 		const me = this;
 		return [
 			{
-				headerContent: me.resources_view != "Shift Type" ? __('Employee') : "Shift Type",
+				headerContent: me.resources_view != "Shift Type" ? __('Employee') : __("Shift Type"),
 				field: 'title',
 				width: '100%',
 				cellContent: function (arg) {
