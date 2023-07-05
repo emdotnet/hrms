@@ -25,10 +25,11 @@
  "icon": "fa fa-flag",
  "idx": 1,
  "links": [],
- "modified": "2022-08-03 15:50:59.756579",
+ "modified": "2023-07-04 10:21:39.843357",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Employment Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -60,5 +61,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "translated_doctype": 1
 }
