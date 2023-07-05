@@ -25,7 +25,7 @@ repos:
         additional_dependencies: [
           'flake8-bugbear',
         ]
-        args: ['--config', '.github/helper/.flake8_strict']
+        args: ['--config', '.flake8']
         exclude: ".*setup.py$"
 
   - repo: https://github.com/frappe/black
