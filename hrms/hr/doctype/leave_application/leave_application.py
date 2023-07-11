@@ -21,9 +21,10 @@ from frappe.utils import (
 )
 
 import erpnext
+from erpnext import get_region
 from erpnext.buying.doctype.supplier_scorecard.supplier_scorecard import daterange
 from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
-from erpnext import get_region
+
 from hrms.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
 from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import create_leave_ledger_entry
 from hrms.hr.utils import (
@@ -33,6 +34,7 @@ from hrms.hr.utils import (
 	share_doc_with_approver,
 	validate_active_employee,
 )
+from hrms.utils import get_employee_email
 
 
 class LeaveDayBlockedError(frappe.ValidationError):
@@ -508,8 +510,9 @@ class LeaveApplication(Document):
 			self.half_day_date = None
 
 	def notify_employee(self):
-		employee = frappe.get_doc("Employee", self.employee)
-		if not employee.user_id:
+		employee_email = get_employee_email(self.employee)
+
+		if not employee_email:
 			return
 
 		parent_doc = frappe.get_doc("Leave Application", self.name)
@@ -526,7 +529,7 @@ class LeaveApplication(Document):
 			{
 				# for post in messages
 				"message": message,
-				"message_to": employee.user_id,
+				"message_to": employee_email,
 				# for email
 				"subject": email_template.subject,
 				"notify": "employee",
@@ -819,9 +822,10 @@ def get_leave_details(employee, date):
 			"remaining_leaves": flt(remaining_leaves, precision),
 		}
 
-
 	# For leaves allocated from contracts, a leave allocation may not be present the first month
-	if not leave_allocation and cint(frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts")):
+	if not leave_allocation and cint(
+		frappe.db.get_single_value("HR Settings", "allocate_leaves_from_contracts")
+	):
 		leave_types = frappe.get_all(
 			"Employment Contract",
 			filters={"ifnull(relieving_date, '3999-12-31')": (">=", date), "employee": employee},
@@ -1300,24 +1304,24 @@ def get_mandatory_approval(doctype):
 def get_approved_leaves_for_period(employee, leave_type, from_date, to_date):
 	LeaveApplication = frappe.qb.DocType("Leave Application")
 	query = (
-			frappe.qb.from_(LeaveApplication)
-			.select(
-					LeaveApplication.employee,
-					LeaveApplication.leave_type,
-					LeaveApplication.from_date,
-					LeaveApplication.to_date,
-					LeaveApplication.total_leave_days,
+		frappe.qb.from_(LeaveApplication)
+		.select(
+			LeaveApplication.employee,
+			LeaveApplication.leave_type,
+			LeaveApplication.from_date,
+			LeaveApplication.to_date,
+			LeaveApplication.total_leave_days,
+		)
+		.where(
+			(LeaveApplication.employee == employee)
+			& (LeaveApplication.docstatus == 1)
+			& (LeaveApplication.status == "Approved")
+			& (
+				(LeaveApplication.from_date.between(from_date, to_date))
+				| (LeaveApplication.to_date.between(from_date, to_date))
+				| ((LeaveApplication.from_date < from_date) & (LeaveApplication.to_date > to_date))
 			)
-			.where(
-					(LeaveApplication.employee == employee)
-					& (LeaveApplication.docstatus == 1)
-					& (LeaveApplication.status == "Approved")
-					& (
-							(LeaveApplication.from_date.between(from_date, to_date))
-							| (LeaveApplication.to_date.between(from_date, to_date))
-							| ((LeaveApplication.from_date < from_date) & (LeaveApplication.to_date > to_date))
-					)
-			)
+		)
 	)
 	if leave_type:
 		query = query.where(LeaveApplication.leave_type == leave_type)
