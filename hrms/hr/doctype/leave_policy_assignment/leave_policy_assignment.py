@@ -1,9 +1,7 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-
 import json
-from math import ceil
 
 import frappe
 from frappe import _, bold
@@ -19,6 +17,7 @@ from frappe.utils import (
 	get_last_day,
 	get_link_to_form,
 	getdate,
+	rounded,
 )
 
 
@@ -75,7 +74,6 @@ class LeavePolicyAssignment(Document):
 					"Leaves for the Leave Type {0} won't be carry-forwarded since carry-forwarding is disabled."
 				).format(frappe.bold(get_link_to_form("Leave Type", leave_type.name)))
 				frappe.msgprint(msg, indicator="orange", alert=True)
-
 
 	def grant_leave_alloc_for_employee(self):
 		if self.leaves_allocated:
@@ -261,7 +259,7 @@ def calculate_pro_rated_leaves(
 
 	if is_earned_leave:
 		return flt(leaves, precision)
-	return ceil(leaves)
+	return rounded(leaves)
 
 
 def is_earned_leave_applicable_for_current_month(date_of_joining, allocate_on_day):
@@ -305,7 +303,7 @@ def create_assignment_for_multiple_employees(employees, data):
 		try:
 			frappe.db.savepoint(savepoint)
 			assignment.submit()
-		except Exception as e:
+		except Exception:
 			frappe.db.rollback(save_point=savepoint)
 			assignment.log_error("Leave Policy Assignment submission failed")
 			failed.append(assignment.name)

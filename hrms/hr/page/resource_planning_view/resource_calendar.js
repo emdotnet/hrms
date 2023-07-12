@@ -2,9 +2,9 @@
 // MIT License. See license.txt
 
 import { Calendar } from '@fullcalendar/core';
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import adaptivePlugin from '@fullcalendar/adaptive';
+import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 
 frappe.provide("erpnext.resource_calendar")
 
@@ -174,7 +174,7 @@ erpnext.resource_calendar.resourceCalendar = class ResourceCalendar {
 		const me = this;
 		return [
 			{
-				headerContent: me.resources_view != "Shift Type" ? __('Employee') : "Shift Type",
+				headerContent: me.resources_view != "Shift Type" ? __('Employee') : __("Shift Type"),
 				field: 'title',
 				width: '100%',
 				cellContent: function (arg) {
