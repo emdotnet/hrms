@@ -73,11 +73,11 @@ class JobOpening(WebsiteGenerator):
 			job_requisition.save()
 
 	def get_context(self, context):
-		context.parents = [{"route": "jobs", "title": _("All Jobs")}]
+		context.parents = [{"route": "jobs", "title": _("All Jobs", context="Job Opening")}]
 
 
 def get_list_context(context):
-	context.title = _("Jobs")
+	context.title = _("Jobs", context="Job Opening")
 	context.introduction = _("Current Job Openings")
 	context.get_list = get_job_openings
 

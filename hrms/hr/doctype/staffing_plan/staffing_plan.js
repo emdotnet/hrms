@@ -33,6 +33,7 @@ frappe.ui.form.on('Staffing Plan', {
 			target: frm,
 			date_field: "posting_date",
 			add_filters_group: 1,
+			primary_action_label: __("Sélectionner les demandes"),
 			setters: {
 				designation: null,
 				requested_by: null,
