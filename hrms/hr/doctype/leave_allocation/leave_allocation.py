@@ -48,7 +48,9 @@ class LeaveAllocation(Document):
 		# all validations that should run on save as well as on update after submit
 		self.validate_back_dated_allocation()
 		self.validate_total_leaves_allocated()
-		self.validate_leave_allocation_days()
+
+		if not self.flags.no_max_leaves_validation:
+			self.validate_leave_allocation_days()
 
 	def validate_leave_allocation_days(self):
 		company = frappe.db.get_value("Employee", self.employee, "company")
