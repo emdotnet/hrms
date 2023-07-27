@@ -19,6 +19,7 @@ test_dependencies = ["Employee"]
 class TestEmployeeReminders(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
+		super().setUpClass()
 		from erpnext.setup.doctype.holiday_list.test_holiday_list import make_holiday_list
 
 		# Create a test holiday list
