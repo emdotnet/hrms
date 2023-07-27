@@ -1,10 +1,9 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-import unittest
-
 import frappe
 from frappe.permissions import clear_user_permissions_for_doctype
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import (
 	add_days,
 	add_months,
@@ -77,7 +76,7 @@ _test_records = [
 ]
 
 
-class TestLeaveApplication(unittest.TestCase):
+class TestLeaveApplication(FrappeTestCase):
 	def setUp(self):
 		for dt in [
 			"Leave Application",
@@ -1200,10 +1199,7 @@ def get_leave_period():
 				to_date=add_months(nowdate(), 6),
 				company="_Test Company",
 				is_active=1,
-				leave_types=[{
-					"leave_type": lt.name
-				} for lt in frappe.get_all("Leave Type")]
-
+				leave_types=[{"leave_type": lt.name} for lt in frappe.get_all("Leave Type")],
 			)
 		).insert()
 

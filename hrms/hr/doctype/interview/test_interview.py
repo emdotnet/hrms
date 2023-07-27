@@ -6,8 +6,8 @@ import os
 
 import frappe
 from frappe import _
-from frappe.tests.utils import FrappeTestCase, change_settings
 from frappe.core.doctype.user_permission.test_user_permission import create_user
+from frappe.tests.utils import FrappeTestCase, change_settings
 from frappe.utils import add_days, get_time, getdate, nowtime
 
 from erpnext.setup.doctype.designation.test_designation import create_designation
@@ -51,9 +51,7 @@ class TestInterview(FrappeTestCase):
 		)
 		self.assertIsNotNone(notification)
 
-	@change_settings(
-		"HR Settings", {"send_interview_reminder": 1}
-	)
+	@change_settings("HR Settings", {"send_interview_reminder": 1})
 	def test_notification_for_scheduling(self):
 		from hrms.hr.doctype.interview.interview import send_interview_reminder
 
@@ -72,9 +70,7 @@ class TestInterview(FrappeTestCase):
 		email_queue = frappe.db.sql("""select * from `tabEmail Queue`""", as_dict=True)
 		self.assertTrue("Subject: Interview Reminder" in email_queue[0].message)
 
-	@change_settings(
-		"HR Settings", {"send_interview_feedback_reminder": 1}
-	)
+	@change_settings("HR Settings", {"send_interview_feedback_reminder": 1})
 	def test_notification_for_feedback_submission(self):
 		from hrms.hr.doctype.interview.interview import send_daily_feedback_reminder
 

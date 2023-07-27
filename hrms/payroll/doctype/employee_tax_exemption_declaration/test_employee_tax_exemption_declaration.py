@@ -1,11 +1,9 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-import unittest
-
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_months, getdate, flt
+from frappe.utils import add_months, flt, getdate
 
 import erpnext
 from erpnext.setup.doctype.employee.test_employee import make_employee

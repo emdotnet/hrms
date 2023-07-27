@@ -1,6 +1,8 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+from dateutil.relativedelta import relativedelta
+
 import frappe
 from frappe.tests.utils import FrappeTestCase, change_settings
 

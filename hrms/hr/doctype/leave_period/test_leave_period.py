@@ -1,16 +1,15 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-import unittest
-
 import frappe
+from frappe.tests.utils import FrappeTestCase
 
 import erpnext
 
 test_dependencies = ["Employee", "Leave Type", "Leave Policy"]
 
 
-class TestLeavePeriod(unittest.TestCase):
+class TestLeavePeriod(FrappeTestCase):
 	pass
 
 
@@ -35,10 +34,7 @@ def create_leave_period(from_date, to_date, company=None):
 			"from_date": from_date,
 			"to_date": to_date,
 			"is_active": 1,
-			"leave_types": [{
-				"leave_type": lt.name
-			} for lt in frappe.get_all("Leave Type")]
-
+			"leave_types": [{"leave_type": lt.name} for lt in frappe.get_all("Leave Type")],
 		}
 	).insert()
 	return leave_period
