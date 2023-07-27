@@ -7,7 +7,7 @@ import os
 import frappe
 from frappe import _
 from frappe.core.doctype.user_permission.test_user_permission import create_user
-from frappe.tests.utils import FrappeTestCase, change_settings
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, get_time, getdate, nowtime
 
 from erpnext.setup.doctype.designation.test_designation import create_designation
