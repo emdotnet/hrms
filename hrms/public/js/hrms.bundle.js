@@ -1,3 +1,2 @@
-import "./conf";
-import "./templates/employees_to_mark_attendance.html";
+import "./templates/employees_with_unmarked_attendance.html";
 import "./utils";
